@@ -7,16 +7,22 @@ import Col from 'react-bootstrap/Col';
 import AdPodList from './AdPodList';
 import { SessionProvider } from './SessionService';
 import PlayerContainer from './PlayerContainer';
+import InfoSection from './InfoSection';
 
 function App() {
   return (
     <SessionProvider>
-      <Container>
+      <Container fluid>
         <Row>
-          <Col md>
+          <Col>
+            <InfoSection/>
+          </Col>
+        </Row>
+        <Row>
+          <Col md={6}>
             <PlayerContainer/>
           </Col>
-          <Col md>
+          <Col md={6}>
             <Nav variant="tabs" defaultActiveKey="/home">
               <Nav.Item>
                 <Nav.Link href="/home">Tracking Events</Nav.Link>

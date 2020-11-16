@@ -20,8 +20,9 @@ const initPlayer = async (pVideoRef, src) => {
     ui.configure(config);
     const controls = ui.getControls();
     const player = controls.getPlayer();
-    player.configure('manifest.defaultPresentationDelay', 20.0 /* seconds */);
-    player.configure('manifest.availabilityWindowOverride', 45.0);
+    player.configure('manifest.defaultPresentationDelay', 8.0 /* seconds */);
+    player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
+    // player.configure('manifest.availabilityWindowOverride', 105.0);
     player.addEventListener("error", onError);
     controls.addEventListener("error", onError);
     try {
@@ -40,10 +41,11 @@ function ShakaPlayer(props) {
   const videoRef = React.createRef();
 
   React.useEffect(() => {
-    // document.addEventListener("shaka-ui-loaded", () =>
-        window.muxjs = muxjs;
-        initPlayer(videoRef.current, props.src);
-    // );
+    window.muxjs = muxjs;
+    document.addEventListener("shaka-ui-loaded", () => {
+      initPlayer(videoRef.current, props.src);
+    });
+    initPlayer(videoRef.current, props.src);
   }, []);
 
   return (
@@ -56,6 +58,7 @@ function ShakaPlayer(props) {
                 data-shaka-player
                 ref={videoRef}
                 style={{ width: "100%", height: "100%" }}
+                autoPlay={true}
             ></video>
         </div>
     </div>
