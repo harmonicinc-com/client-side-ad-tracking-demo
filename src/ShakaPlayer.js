@@ -3,7 +3,7 @@ import "shaka-player/dist/controls.css";
 import shaka from "shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
-const initPlayer = async (pVideoRef) => {
+const initPlayer = async (pVideoRef, src) => {
     const ui = pVideoRef["ui"];
     const config = {
       controlPanelElements: [
@@ -25,8 +25,7 @@ const initPlayer = async (pVideoRef) => {
     player.addEventListener("error", onError);
     controls.addEventListener("error", onError);
     try {
-    //   await player.load("https://acheung-desktop.nebula.video:20212/variant/v1/dai/DASH/Live/channel(clear)/manifest.mpd");
-      await player.load("https://acheung-desktop.nebula.video:20212/Content/HLS/Live/channel(clear)/index.m3u8");
+        await player.load(src);
       console.log("The video has now been loaded!");
     } catch (err) {
       console.log("TCL: err", err);
@@ -37,13 +36,13 @@ const initPlayer = async (pVideoRef) => {
 const onError = (event: any) =>
   console.error("Error code", event);
 
-function PlayerWrapper(props) {
+function ShakaPlayer(props) {
   const videoRef = React.createRef();
 
   React.useEffect(() => {
     // document.addEventListener("shaka-ui-loaded", () =>
         window.muxjs = muxjs;
-        initPlayer(videoRef.current)
+        initPlayer(videoRef.current, props.src);
     // );
   }, []);
 
@@ -63,4 +62,4 @@ function PlayerWrapper(props) {
   );
 }
 
-export default PlayerWrapper;
+export default ShakaPlayer;
