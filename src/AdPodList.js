@@ -13,17 +13,32 @@ function AdPodList() {
       {pods ?
         <ListGroup>
           {pods.map((pod) =>
-            <ListGroup.Item key={pod.id}>
-              Ad Pod: {pod.id}
+            <ListGroup.Item key={pod.id} className={pod.start < session.playheadTime && session.playheadTime < pod.start + pod.duration ? 'ad-pod-on-air' : 'inactive'}>
+              <div>
+                Ad Pod: {pod.id}
+              </div>
+              <div>
+                Time: {new Date(pod.start).toLocaleString()} - {new Date(pod.start + pod.duration).toLocaleString()}
+              </div>
               <ListGroup>
                 {pod.ads.map((ad) =>
-                  <ListGroup.Item key={ad.id}>
-                    Ad: {ad.id}
+                  <ListGroup.Item key={ad.id} className={ad.start < session.playheadTime && session.playheadTime < ad.start + ad.duration ? 'ad-on-air' : 'inactive'}>
+                    <div>
+                      Ad: {ad.id}
+                    </div>
+                    <div>
+                      Time: {new Date(ad.start).toLocaleString()} - {new Date(ad.start + ad.duration).toLocaleString()}
+                    </div>
                     {ad.trackingUrls ? 
                       <ListGroup variant="flush">
                         {ad.trackingUrls.map((trackingUrl,index) =>
                           <ListGroup.Item key={index}>
-                            URL: {trackingUrl.url}
+                            <div>
+                              Event: {trackingUrl.event}
+                            </div>
+                            <div>
+                              URL: {trackingUrl.url}
+                            </div>
                           </ListGroup.Item>
                         )}
                       </ListGroup>

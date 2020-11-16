@@ -1,3 +1,14 @@
-.ad-pod-list {
+.ad-pod-list .list-group-item {
     font-size: small;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ad-pod-list .list-group-item.ad-pod-on-air {
+    background-color: rgb(54, 140, 238);
+}
+
+.ad-pod-list .list-group-item.ad-on-air {
+    background-color: rgb(113, 180, 255);
 }

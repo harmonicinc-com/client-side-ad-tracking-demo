@@ -1,19 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import useInterval from './useInterval';
 
 const SessionContext = React.createContext();
 
 const SessionProvider = (props) => {
     const [adPods, setAdPods] = useState([]);
+    const [currentTime, setCurrentTime] = useState(NaN);
+    const [playheadTime, setPlayheadTime] = useState(NaN);
 
     useInterval(async () => {
         setAdPods(await reloadAdPods());
-    }, 1000);
+    }, 4000, true);
 
     const value = {
         manifestUrl: getManifestUrl(),
         adTrackingMetadataUrl: getAdTrackingMetadataUrl(),
-        adPods: adPods
+        adPods: adPods,
+        currentTime: currentTime,
+        playheadTime: playheadTime,
+        updatePlayerTime: (currentTime, playheadTime) => {
+            setCurrentTime(currentTime);
+            setPlayheadTime(playheadTime);
+        }
     };
 
     return (

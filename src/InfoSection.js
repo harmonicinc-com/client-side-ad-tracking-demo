@@ -9,7 +9,7 @@ function InfoSection() {
         <Form>
             <Form.Group controlId="formBasic">
                 <Form.Label>Manifest URL</Form.Label>
-                <Form.Control type="text" placeholder="Enter manifest URL" value={session.manifestUrl} />
+                <Form.Control type="text" placeholder="Enter manifest URL" defaultValue={session.manifestUrl} />
             </Form.Group>
         </Form>
     );

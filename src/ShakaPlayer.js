@@ -3,7 +3,7 @@ import "shaka-player/dist/controls.css";
 import shaka from "shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
-const initPlayer = async (pVideoRef, src) => {
+const initPlayer = async (pVideoRef, props) => {
     const ui = pVideoRef["ui"];
     const config = {
       controlPanelElements: [
@@ -20,13 +20,16 @@ const initPlayer = async (pVideoRef, src) => {
     ui.configure(config);
     const controls = ui.getControls();
     const player = controls.getPlayer();
-    player.configure('manifest.defaultPresentationDelay', 8.0 /* seconds */);
+    player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
     player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
     // player.configure('manifest.availabilityWindowOverride', 105.0);
     player.addEventListener("error", onError);
+    if (props.onTimeUpdate) {
+      pVideoRef.addEventListener('timeupdate', () => props.onTimeUpdate(pVideoRef.currentTime, pVideoRef, player));
+    }
     controls.addEventListener("error", onError);
     try {
-        await player.load(src);
+        await player.load(props.src);
       console.log("The video has now been loaded!");
     } catch (err) {
       console.log("TCL: err", err);
@@ -43,9 +46,9 @@ function ShakaPlayer(props) {
   React.useEffect(() => {
     window.muxjs = muxjs;
     document.addEventListener("shaka-ui-loaded", () => {
-      initPlayer(videoRef.current, props.src);
+      initPlayer(videoRef.current, props);
     });
-    initPlayer(videoRef.current, props.src);
+    initPlayer(videoRef.current, props);
   }, []);
 
   return (
