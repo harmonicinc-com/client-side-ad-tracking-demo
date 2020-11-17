@@ -1,22 +1,27 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ShakaPlayer from './ShakaPlayer';
 import { SessionContext } from './SessionService';
 
 function PlayerContainer() {
     const session = React.useContext(SessionContext);
+
     const updateTime = (time, video, player) => {
-        // const playheadTime = player.getPlayheadTimeAsDate().getTime();
-        const playheadTime = new Date('2020-11-16T15:43:46Z').getTime() + time * 1000;
-        session.updatePlayerTime(time, playheadTime);
-    }
+        session.updatePlayerTime(time);
+    };
+
+    const startTracker = () => {
+        session.setPlaybackStarted();
+    }; 
+
+    const stopTracker = () => {
+        session.setPlaybackPaused();
+    };
+
     return (
         <div>
-            <ShakaPlayer src={session.manifestUrl} onTimeUpdate={updateTime} />
+            <ShakaPlayer src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
             <div>
                 currentTime: {session.currentTime.toFixed(1)}s
-            </div>
-            <div>
-                Playhead time: {new Date(session.playheadTime).toLocaleString()}
             </div>
         </div>
     );

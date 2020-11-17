@@ -27,6 +27,12 @@ const initPlayer = async (pVideoRef, props) => {
     if (props.onTimeUpdate) {
       pVideoRef.addEventListener('timeupdate', () => props.onTimeUpdate(pVideoRef.currentTime, pVideoRef, player));
     }
+    if (props.onPlaying) {
+      pVideoRef.addEventListener('playing', () => props.onPlaying());
+    }
+    if (props.onPaused) {
+      pVideoRef.addEventListener('paused', () => props.onPaused());
+    }
     controls.addEventListener("error", onError);
     try {
         await player.load(props.src);
