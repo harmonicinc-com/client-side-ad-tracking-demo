@@ -1,17 +1,12 @@
 import React from 'react';
-import Form from 'react-bootstrap/Form';
+import TextField from '@material-ui/core/TextField';
 import { SessionContext } from './SessionService';
 
 function InfoSection() {
     const session = React.useContext(SessionContext);
 
     return (
-        <Form>
-            <Form.Group controlId="formBasic">
-                <Form.Label>Manifest URL</Form.Label>
-                <Form.Control type="text" placeholder="Enter manifest URL" defaultValue={session.manifestUrl} />
-            </Form.Group>
-        </Form>
+        <TextField label="Manifest URL" fullWidth={true} defaultValue={session.manifestUrl} />
     );
 }
 
