@@ -19,7 +19,7 @@ function PlayerContainer() {
 
     return (
         <div>
-            <ShakaPlayer src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
+            <ShakaPlayer key={"player-" + session.localSessionId} src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
             <div>
                 currentTime: {session.currentTime.toFixed(1)}s
             </div>
