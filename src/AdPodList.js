@@ -46,7 +46,10 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(1)
   },
   greenIcon: {
-    color: 'green',
+    color: 'green'
+  },
+  redIcon: {
+    color: 'red'
   }
 }));
 
@@ -99,7 +102,10 @@ function AdPodList() {
                         {ad.trackingUrls.map((trackingUrl,index) =>
                           <ListItem key={index} className={classes.trackingUrlItem}>
                             <ListItemIcon>
-                              {trackingUrl.sent ? <CheckCircleIcon className={classes.greenIcon} /> : <RadioButtonUncheckedIcon />}
+                              {trackingUrl.reportingState === "IDLE" ? <RadioButtonUncheckedIcon /> : null}
+                              {trackingUrl.reportingState === "REPORTING" ? <HourglassFullIcon /> : null}
+                              {trackingUrl.reportingState === "DONE" ? <CheckCircleIcon className={classes.greenIcon} /> : null}
+                              {trackingUrl.reportingState === "ERROR" ? <ErrorIcon className={classes.redIcon} /> : null}
                             </ListItemIcon>
                             <ListItemText disableTypography className={classes.itemText}>
                               <div>

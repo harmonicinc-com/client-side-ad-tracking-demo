@@ -56,7 +56,7 @@ class AdTracker {
                         event: t.event,
                         startTime: t.startTime,
                         url: t.url,
-                        sent: false
+                        reportingState: "IDLE"
                     }))
                 };
                 pod.ads.push(existingAd);
@@ -79,11 +79,28 @@ class AdTracker {
     }
 
     updatePlayerTime(time) {
+        const sendBeacon = async (trackingUrl) => {
+            trackingUrl.reportingState = "REPORTING";
+
+            try {
+                const response = await fetch(trackingUrl.url);
+                if (response.status >= 200 && response.status <= 299) {
+                    trackingUrl.reportingState = "DONE";
+                } else {
+                    trackingUrl.reportingState = "ERROR";
+                }
+            } catch (err) {
+                trackingUrl.reportingState = "ERROR";
+            }
+        };
+
         this.adPods.forEach((pod) => {
             pod.ads.forEach((ad) => {
                 ad.trackingUrls.forEach((trackingUrl) => {
-                    if (trackingUrl.startTime && time > trackingUrl.startTime) {
-                        trackingUrl.sent = true;
+                    if (trackingUrl.reportingState === "IDLE" && 
+                        trackingUrl.startTime && time > trackingUrl.startTime &&
+                        this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
+                        sendBeacon(trackingUrl);
                     }
                 });
             });
