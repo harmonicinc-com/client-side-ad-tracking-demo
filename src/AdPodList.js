@@ -16,9 +16,9 @@ import './AdPodList.css'
 const useStyles = makeStyles((theme) => ({
   itemText: {
     fontSize: 13,
-    // whiteSpace: "nowrap",
-    // overflow: "hidden",
-    // textOverflow: "ellipsis"
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
   },
   podItem: {
     paddingTop: theme.spacing(1),
