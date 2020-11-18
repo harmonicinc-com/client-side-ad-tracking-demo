@@ -9,16 +9,24 @@ class AdTracker {
 
     async refreshMetadata() {
         const response = await fetch(this.metadataUrl);
-        const json = await response.json();
-        const pods = json.pods;
-        if (pods) {
-            this.mergePods(pods);
+        try {
+            if (response.status < 200 || response.status > 299) {
+                throw new Error(`Get unexpected response code {response.status}`);
+            }
+            const json = await response.json();
+            const pods = json.pods;
+            if (pods) {
+                this.mergePods(pods);
+            }
+        } catch (err) {
+            console.error("Failed to refresh metadata", err);
         }
     }
 
     mergePods(pods) {
         for (var i = this.adPods.length - 1; i >= 0; i--) {
-            if (!pods.find(p => p.id === this.adPods[i].id)) {
+            const podId = this.adPods[i].id;
+            if (!pods.find(p => p.id === podId)) {
                 this.adPods.splice(i, 1);
             }
         }
@@ -41,7 +49,8 @@ class AdTracker {
 
     mergeAds(pod, ads) {
         for (var i = pod.ads.length - 1; i >= 0; i--) {
-            if (!ads.find(a => a.id === pod.ads[i].id)) {
+            const adId = pod.ads[i].id;
+            if (!ads.find(a => a.id === adId)) {
                 pod.ads.splice(i, 1);
             }
         }

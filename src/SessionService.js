@@ -37,7 +37,7 @@ const SessionProvider = (props) => {
             setAdPods(pods);
         }
         refersh();
-    }, [localSessionId]);
+    }, [mediaUrl, localSessionId]);
 
     useInterval(async () => {
         await adTracker.refreshMetadata();
