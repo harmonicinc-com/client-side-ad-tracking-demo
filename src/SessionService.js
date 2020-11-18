@@ -15,7 +15,7 @@ const SessionProvider = (props) => {
     const [adPods, setAdPods] = useState([]);
 
     const rewriteUrlToMetadataUrl = (url) => {
-        return url.replace(/\/[^/\?]+(\??[^/]*)$/, '/beacon$1');
+        return url.replace(/\/[^/?]+(\??[^/]*)$/, '/beacon$1');
     }
 
     const loadMedia = async (url) => {
