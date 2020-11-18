@@ -3,9 +3,20 @@ import "shaka-player/dist/controls.css";
 import shaka from "shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
-const initPlayer = async (pVideoRef, containerRef, props) => {
-    const player = new shaka.Player(pVideoRef);
-    const ui = new shaka.ui.Overlay(player, containerRef, pVideoRef);
+const initPlayer = (pVideoRef, containerRef, props) => {
+    var ui = pVideoRef["ui"];
+    var controls;
+    var player;
+
+    if (ui) {
+      controls = ui.getControls();
+      player = controls.getPlayer();
+    } else {
+      player = new shaka.Player(pVideoRef);
+      ui = new shaka.ui.Overlay(player, containerRef, pVideoRef);
+      controls = ui.getControls();
+    }
+
     const config = {
       controlPanelElements: [
         "rewind",
@@ -19,8 +30,6 @@ const initPlayer = async (pVideoRef, containerRef, props) => {
       ]
     };
     ui.configure(config);
-    ui.getControls();
-    const controls = ui.getControls();
 
     player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
     player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
@@ -36,15 +45,11 @@ const initPlayer = async (pVideoRef, containerRef, props) => {
       pVideoRef.addEventListener('paused', () => props.onPaused());
     }
     controls.addEventListener("error", onError);
-    try {
-        await player.load(props.src);
-      console.log("The video has now been loaded!");
-    } catch (err) {
-      console.log("TCL: err", err);
-      onError(err);
-    }
+    player.load(props.src);
+
+    return player;
 };
-  
+
 const onError = (event: any) =>
   console.error("Error code", event);
 
@@ -54,10 +59,8 @@ function ShakaPlayer(props) {
 
   React.useEffect(() => {
     window.muxjs = muxjs;
-    // document.addEventListener("shaka-ui-loaded", () => {
-    //   initPlayer(videoRef.current, props);
-    // });
-    initPlayer(videoRef.current, containerRef.current, props);
+    const player = initPlayer(videoRef.current, containerRef.current, props);
+    return () => player.unload();
   }, []);
 
   return (

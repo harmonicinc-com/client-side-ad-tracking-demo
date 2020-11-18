@@ -8,7 +8,7 @@ var adTracker;
 
 const SessionProvider = (props) => {
     const [mediaUrl, setMediaUrl] = useState("https://acheung-desktop.nebula.video:20212/variant/v1/dai/DASH/Live/channel(clear)/manifest.mpd");
-    const [localSessionId, setLocalSessionId] = useState(new Date().to);
+    const [localSessionId, setLocalSessionId] = useState(new Date().toISOString());
     const [manifestUrl, setManifestUrl] = useState(null);
     const [adTrackingMetadataUrl, setAdTrackingMetadataUrl] = useState(null);
     const [currentTime, setCurrentTime] = useState(NaN);
@@ -53,7 +53,7 @@ const SessionProvider = (props) => {
         currentTime: currentTime,
         load: async (url) => {
             setMediaUrl(url);
-            setLocalSessionId(new Date().toString());
+            setLocalSessionId(new Date().toISOString());
         },
         updatePlayerTime: (currentTime) => {
             setCurrentTime(currentTime);
