@@ -91,15 +91,19 @@ class AdTracker {
         };
 
         this.adPods.forEach((pod) => {
-            pod.ads.forEach((ad) => {
-                ad.trackingUrls.forEach((trackingUrl) => {
-                    if (trackingUrl.reportingState === "IDLE" && 
-                        trackingUrl.startTime && time > trackingUrl.startTime &&
-                        this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
-                        sendBeacon(trackingUrl);
+            if (pod.start < time && time < pod.start + pod.duration) {
+                pod.ads.forEach((ad) => {
+                    if (ad.start < time && time < ad.start + ad.duration) {
+                        ad.trackingUrls.forEach((trackingUrl) => {
+                            if (trackingUrl.reportingState === "IDLE" && 
+                                trackingUrl.startTime && time > trackingUrl.startTime &&
+                                this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
+                                sendBeacon(trackingUrl);
+                            }
+                        });
                     }
                 });
-            });
+            }
         });
         this.lastPlayerTime = time;
     }
