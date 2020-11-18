@@ -67,8 +67,8 @@ function AdPodList() {
       {pods ?
         <List>
           {pods.map((pod) =>
-            <>
-              <ListItem key={pod.id} className={pod.start < playheadInMs && playheadInMs < pod.start + pod.duration ? classes.podItemOnAir : classes.podItem}>
+            <div key={pod.id}>
+              <ListItem className={pod.start < playheadInMs && playheadInMs < pod.start + pod.duration ? classes.podItemOnAir : classes.podItem}>
                 <ListItemIcon>
                   <FolderIcon />
                 </ListItemIcon>
@@ -81,10 +81,10 @@ function AdPodList() {
                   </div>
                 </ListItemText>
               </ListItem>
-              <List>
+              <List key={pod.id + ".ads"}>
                 {pod.ads.map((ad) =>
-                  <>
-                    <ListItem key={ad.id} className={ad.start < playheadInMs && playheadInMs < ad.start + ad.duration ? classes.adItemOnAir : classes.adItem}>
+                  <div key={ad.id}>
+                    <ListItem className={ad.start < playheadInMs && playheadInMs < ad.start + ad.duration ? classes.adItemOnAir : classes.adItem}>
                       <ListItemIcon>
                         <MovieIcon />
                       </ListItemIcon>
@@ -97,9 +97,9 @@ function AdPodList() {
                         </div>
                       </ListItemText>
                     </ListItem>
-                    {ad.trackingUrls ? 
-                      <List>
-                        {ad.trackingUrls.map((trackingUrl,index) =>
+                    <List key={ad.id + ".trackingUrls"}>
+                      {ad.trackingUrls ? 
+                        ad.trackingUrls.map((trackingUrl,index) =>
                           <ListItem key={index} className={classes.trackingUrlItem}>
                             <ListItemIcon>
                               {trackingUrl.reportingState === "IDLE" ? <RadioButtonUncheckedIcon /> : null}
@@ -121,14 +121,14 @@ function AdPodList() {
                                 : null}
                             </ListItemText>
                           </ListItem>
-                        )}
-                      </List>
-                      : null
-                    }
-                  </>
+                        )
+                        : null
+                      }
+                    </List>
+                  </div>
                 )}
               </List>
-            </>
+            </div>
           )}
         </List>
         : null
