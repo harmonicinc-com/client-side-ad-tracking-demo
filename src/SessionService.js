@@ -8,11 +8,15 @@ let adTracker;
 
 const SessionProvider = (props) => {
     const [mediaUrl, setMediaUrl] = useState("https://acheung-desktop.nebula.video:20212/variant/v1/dai/DASH/Live/channel(clear)/manifest.mpd");
-    const [localSessionId, setLocalSessionId] = useState(new Date().toISOString());
+    const [localSessionId, setLocalSessionId] = useState(null);
     const [manifestUrl, setManifestUrl] = useState(null);
     const [adTrackingMetadataUrl, setAdTrackingMetadataUrl] = useState(null);
     const [currentTime, setCurrentTime] = useState(NaN);
     const [adPods, setAdPods] = useState([]);
+
+    const rewriteUrlToMetadataUrl = (url) => {
+        return url.replace(/\/[^/\?]+(\??[^/]*)$/, '/beacon$1');
+    }
 
     const loadMedia = async (url) => {
         setMediaUrl(url);
@@ -22,10 +26,10 @@ const SessionProvider = (props) => {
 
         if (response.redirected) {
             setManifestUrl(response.url);
-            newAdTrackingMetadataUrl = response.url.replace(/[^/]+.mpd/, 'beacon');
+            newAdTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
         } else {
             setManifestUrl(url);
-            newAdTrackingMetadataUrl = url.replace(/[^/]+.mpd/, 'beacon');
+            newAdTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
         }
 
         setAdTrackingMetadataUrl(newAdTrackingMetadataUrl);
