@@ -4,9 +4,9 @@ import shaka from "shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
 const initPlayer = (pVideoRef, containerRef, props) => {
-    var ui = pVideoRef["ui"];
-    var controls;
-    var player;
+    let ui = pVideoRef["ui"];
+    let controls;
+    let player;
 
     if (ui) {
       controls = ui.getControls();

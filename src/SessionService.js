@@ -4,7 +4,7 @@ import useInterval from './useInterval';
 
 const SessionContext = React.createContext();
 
-var adTracker;
+let adTracker;
 
 const SessionProvider = (props) => {
     const [mediaUrl, setMediaUrl] = useState("https://acheung-desktop.nebula.video:20212/variant/v1/dai/DASH/Live/channel(clear)/manifest.mpd");
@@ -14,30 +14,33 @@ const SessionProvider = (props) => {
     const [currentTime, setCurrentTime] = useState(NaN);
     const [adPods, setAdPods] = useState([]);
 
-    useEffect(() => {
-        const refersh = async () => {
-            const response = await fetch(mediaUrl, { redirect: 'follow', cache: 'reload' });
-            var newAdTrackingMetadataUrl;
+    const loadMedia = async (url) => {
+        setMediaUrl(url);
 
-            if (response.redirected) {
-                setManifestUrl(response.url);
-                newAdTrackingMetadataUrl = response.url.replace(/\/[^\/]+.mpd/, '/beacon');
-                // setAdTrackingMetadataUrl()
-            } else {
-                setManifestUrl(mediaUrl);
-                newAdTrackingMetadataUrl = mediaUrl.replace(/\/[^\/]+.mpd/, '/beacon');
-                // setAdTrackingMetadataUrl()
-            }
+        const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
+        let newAdTrackingMetadataUrl;
 
-            setAdTrackingMetadataUrl(newAdTrackingMetadataUrl);
-            adTracker = new AdTracker(newAdTrackingMetadataUrl, 4000);
-            setAdPods([]);
-            await adTracker.refreshMetadata();
-            const pods = adTracker.getAdPods();
-            setAdPods(pods);
+        if (response.redirected) {
+            setManifestUrl(response.url);
+            newAdTrackingMetadataUrl = response.url.replace(/[^/]+.mpd/, 'beacon');
+        } else {
+            setManifestUrl(url);
+            newAdTrackingMetadataUrl = url.replace(/[^/]+.mpd/, 'beacon');
         }
-        refersh();
-    }, [mediaUrl, localSessionId]);
+
+        setAdTrackingMetadataUrl(newAdTrackingMetadataUrl);
+        adTracker = new AdTracker(newAdTrackingMetadataUrl, 4000);
+        setAdPods([]);
+        setLocalSessionId(new Date().toISOString());
+
+        await adTracker.refreshMetadata();
+        const pods = adTracker.getAdPods();
+        setAdPods(pods);
+    }
+
+    useEffect(() => {
+        loadMedia(mediaUrl);
+    }, []);
 
     useInterval(async () => {
         await adTracker.refreshMetadata();
@@ -51,10 +54,7 @@ const SessionProvider = (props) => {
         adTrackingMetadataUrl: adTrackingMetadataUrl,
         adPods: adPods,
         currentTime: currentTime,
-        load: async (url) => {
-            setMediaUrl(url);
-            setLocalSessionId(new Date().toISOString());
-        },
+        load: (url) => loadMedia(url),
         updatePlayerTime: (currentTime) => {
             setCurrentTime(currentTime);
             adTracker.updatePlayerTime(currentTime * 1000);

@@ -24,14 +24,14 @@ class AdTracker {
     }
 
     mergePods(pods) {
-        for (var i = this.adPods.length - 1; i >= 0; i--) {
+        for (let i = this.adPods.length - 1; i >= 0; i--) {
             const podId = this.adPods[i].id;
             if (!pods.find(p => p.id === podId)) {
                 this.adPods.splice(i, 1);
             }
         }
         pods.forEach((pod) => {
-            var existingPod = this.adPods.find(p => p.id === pod.id);
+            let existingPod = this.adPods.find(p => p.id === pod.id);
             if (!existingPod) {
                 existingPod = {
                     id: pod.id,
@@ -48,14 +48,14 @@ class AdTracker {
     }
 
     mergeAds(pod, ads) {
-        for (var i = pod.ads.length - 1; i >= 0; i--) {
+        for (let i = pod.ads.length - 1; i >= 0; i--) {
             const adId = pod.ads[i].id;
             if (!ads.find(a => a.id === adId)) {
                 pod.ads.splice(i, 1);
             }
         }
         ads.forEach((ad) => {            
-            var existingAd = pod.ads.find(a => a.id === ad.id);
+            let existingAd = pod.ads.find(a => a.id === ad.id);
             if (!existingAd) {
                 existingAd = {
                     id: ad.id,
