@@ -23,7 +23,10 @@ function PlayerContainer() {
                 <ShakaPlayer key={"player-" + session.localSessionId} src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
                 : null }
             <div>
-                currentTime: {session.currentTime.toFixed(1)}s
+                Raw currentTime from video element: {session.currentTime.toFixed(1)}s
+            </div>
+            <div>
+                Playhead date time: {new Date(session.presentationStartTime + session.currentTime * 1000).toLocaleString()}
             </div>
         </div>
     );

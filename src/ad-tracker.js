@@ -1,26 +1,13 @@
 class AdTracker {
 
-    constructor(metadataUrl) {
-        this.metadataUrl = metadataUrl;
+    constructor() {
         this.playing = false;
         this.adPods = [];
         this.lastPlayerTime = null;
     }
 
-    async refreshMetadata() {
-        const response = await fetch(this.metadataUrl);
-        try {
-            if (response.status < 200 || response.status > 299) {
-                throw new Error(`Get unexpected response code {response.status}`);
-            }
-            const json = await response.json();
-            const pods = json.pods;
-            if (pods) {
-                this.mergePods(pods);
-            }
-        } catch (err) {
-            console.error("Failed to refresh metadata", err);
-        }
+    updatePods(pods) {
+        this.mergePods(pods);
     }
 
     mergePods(pods) {

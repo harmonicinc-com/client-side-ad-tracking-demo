@@ -60,7 +60,7 @@ function AdPodList() {
 
   const pods = session.adPods ? session.adPods : [];
 
-  const playheadInMs = session.currentTime * 1000;
+  const playheadInMs = session.presentationStartTime + session.currentTime * 1000;
 
   return (
     <div className="ad-pod-list">
@@ -77,7 +77,7 @@ function AdPodList() {
                     Ad Pod: {pod.id}
                   </div>
                   <div>
-                    Time: {(pod.start / 1000).toFixed(1)}s, Duration: {(pod.duration / 1000).toFixed(1)}s
+                    Time: {new Date(pod.start).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
                   </div>
                 </ListItemText>
               </ListItem>
@@ -93,7 +93,7 @@ function AdPodList() {
                           Ad: {ad.id}
                         </div>
                         <div>
-                          Time: {(ad.start / 1000).toFixed(1)}s, Duration: {(ad.duration / 1000).toFixed(1)}s
+                          Time: {new Date(ad.start).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
                         </div>
                       </ListItemText>
                     </ListItem>
@@ -116,7 +116,7 @@ function AdPodList() {
                               </div>
                               {trackingUrl.startTime ?
                                 <div>
-                                  Time: {trackingUrl.startTime}
+                                  Time: {new Date(trackingUrl.startTime).toLocaleString()}
                                 </div>
                                 : null}
                             </ListItemText>
