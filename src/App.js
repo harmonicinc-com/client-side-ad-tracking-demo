@@ -9,6 +9,7 @@ import AdPodList from './AdPodList';
 import { SessionProvider } from './SessionService';
 import PlayerContainer from './PlayerContainer';
 import InfoSection from './InfoSection';
+import { Route, BrowserRouter as Router } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -22,33 +23,37 @@ function App() {
   const classes = useStyles();
 
   return (
-    <SessionProvider>
-      <Container>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper square className={classes.paper}>
-              <InfoSection/>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Paper square className={classes.paper}>
-              <PlayerContainer/>
-            </Paper>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Paper square className={classes.paper}>
-              <Tabs
-                value={0}
-                indicatorColor="primary"
-                textColor="primary">
-                <Tab label="Tracking Events" />
-              </Tabs>
-              <AdPodList />
-            </Paper>
-          </Grid>
-        </Grid>
-      </Container>
-    </SessionProvider>
+    <Router>
+      <Route exact path="/">
+        <SessionProvider>
+          <Container>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <Paper square className={classes.paper}>
+                  <InfoSection/>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Paper square className={classes.paper}>
+                  <PlayerContainer/>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <Paper square className={classes.paper}>
+                  <Tabs
+                    value={0}
+                    indicatorColor="primary"
+                    textColor="primary">
+                    <Tab label="Tracking Events" />
+                  </Tabs>
+                  <AdPodList />
+                </Paper>
+              </Grid>
+            </Grid>
+          </Container>
+        </SessionProvider>
+      </Route>
+    </Router>
   );
 }
 

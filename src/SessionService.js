@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useHistory, useLocation } from 'react-router-dom';
 import AdTracker from './ad-tracker';
 import useInterval from './useInterval';
 
@@ -9,7 +10,12 @@ let adTracker;
 let presentationStartTime;
 
 const SessionProvider = (props) => {
-    const [mediaUrl, setMediaUrl] = useState("https://acheung-desktop.nebula.video:20212/variant/v1/dai/DASH/Live/channel(clear)/manifest.mpd");
+    const history = useHistory();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+    const urlQueryParam = searchParams.get("url");
+
+    const [mediaUrl, setMediaUrl] = useState(urlQueryParam || '');
     const [localSessionId, setLocalSessionId] = useState(null);
     const [manifestUrl, setManifestUrl] = useState(null);
     const [adTrackingMetadataUrl, setAdTrackingMetadataUrl] = useState(null);
@@ -50,24 +56,28 @@ const SessionProvider = (props) => {
     }
 
     const refreshMetadata = async (url) => {
-        const response = await fetch(url);
-        try {
-            if (response.status < 200 || response.status > 299) {
-                throw new Error(`Get unexpected response code {response.status}`);
+        if (url) {
+            const response = await fetch(url);
+            try {
+                if (response.status < 200 || response.status > 299) {
+                    throw new Error(`Get unexpected response code {response.status}`);
+                }
+                const json = await response.json();
+
+                presentationStartTime = json.dashAvailabilityStartTime;
+
+                adTracker.updatePods(json.pods || []);
+                setAdPods(adTracker.getAdPods());
+            } catch (err) {
+                console.error("Failed to refresh metadata", err);
             }
-            const json = await response.json();
-
-            presentationStartTime = json.dashAvailabilityStartTime;
-
-            adTracker.updatePods(json.pods || []);
-            setAdPods(adTracker.getAdPods());
-        } catch (err) {
-            console.error("Failed to refresh metadata", err);
         }
     }
 
     useEffect(() => {
-        loadMedia(mediaUrl);
+        if (mediaUrl) {
+            loadMedia(mediaUrl);
+        }
     }, []);
 
     useInterval(() => {
@@ -82,7 +92,10 @@ const SessionProvider = (props) => {
         presentationStartTime: presentationStartTime,
         adPods: adPods,
         currentTime: currentTime,
-        load: (url) => loadMedia(url),
+        load: (url) => {
+            history.replace("?url=" + encodeURIComponent(url));
+            loadMedia(url);
+        },
         updatePlayerTime: (currentTime) => {
             setCurrentTime(currentTime);
             adTracker.updatePlayerTime(presentationStartTime + currentTime * 1000);
