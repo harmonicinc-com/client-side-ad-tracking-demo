@@ -12,7 +12,6 @@ import HourglassFullIcon from '@material-ui/icons/HourglassFull';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
-import './AdPodList.css'
 import PlaybackContext from './PlaybackContext';
 
 const useStyles = makeStyles((theme) => ({

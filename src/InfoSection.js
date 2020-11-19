@@ -1,6 +1,6 @@
 import { useContext, useRef } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Button, Link, TextField } from '@material-ui/core';
+import { Box, Button, Link, TextField, Typography } from '@material-ui/core';
 import SessionContext from './SessionContext';
 
 const useStyles = makeStyles((theme) => ({
@@ -32,6 +32,9 @@ function InfoSection() {
 
   return (
     <div>
+      <Typography variant="h5" gutterBottom>
+        Harmonic Client Side Ad Tracking Demo
+      </Typography>
       <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={sessionInfo.mediaUrl || ''} />
       <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">
         <Button variant="contained" color="primary" onClick={load}>
