@@ -46,10 +46,22 @@ function PlayerContainer() {
         <div>
             <ShakaPlayer ref={shakaRef}
                 onTimeUpdate={updateTime}
-                onPlaying={() => adTrackingContext.startTracking()}
-                onPaused={() => adTrackingContext.stopTracking()}
-                onMute={() => adTrackingContext.mute()}
-                onUnmute={() => adTrackingContext.unmute()}
+                onPaused={() => {
+                    console.log('playback paused');
+                    adTrackingContext.pause();
+                }}
+                onResume={() =>{
+                    console.log('playback resumed from pause');
+                    adTrackingContext.resume()
+                }}
+                onMute={() => {
+                    console.log('player muted');
+                    adTrackingContext.mute();
+                }}
+                onUnmute={() => {
+                    console.log('player unmute');
+                    adTrackingContext.unmute();
+                }}
                 onError={onError}/>
             <div>
                 Raw currentTime from video element: {playbackContext.currentTime.toFixed(1)}s

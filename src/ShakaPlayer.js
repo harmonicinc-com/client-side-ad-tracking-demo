@@ -10,6 +10,7 @@ class ShakaPlayer extends Component {
     this.containerRef = createRef();
     this.player = null;
     this.lastMuted = false;
+    this.paused = false;
   }
 
   componentDidMount() {
@@ -40,8 +41,16 @@ class ShakaPlayer extends Component {
 
     video.addEventListener('timeupdate', () => this.props.onTimeUpdate?.(video.currentTime));
     video.addEventListener('error', (err) => this.props.onError?.(err));
-    video.addEventListener('playing', () => this.props.onPlaying?.());
-    video.addEventListener('paused', () => this.props.onPaused?.());
+    video.addEventListener('playing', () => {
+      if (this.paused) {
+        this.props.onResume?.();
+        this.paused = false;
+      }
+    });
+    video.addEventListener('pause', () => {
+      this.props.onPaused?.();
+      this.paused = true;
+    });
     video.addEventListener('volumechange', () => {
       if (video.muted && !this.lastMuted) {
         this.props.onMute?.();
@@ -54,12 +63,13 @@ class ShakaPlayer extends Component {
 
   load(url) {
     this.player.load(url);
+    this.paused = false;
   }
 
   unload() {
     this.player.unload();
+    this.paused = false;
   }
-
 
   render() {
     return (

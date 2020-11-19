@@ -111,11 +111,11 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const adTrackingContext = {
         adPods: adPods,
+        updatePlayerTime: (time) => adTracker?.updatePlayerTime(time),
+        pause: () => adTracker.pause(),
+        resume: () => adTracker.resume(),
         mute: () => adTracker.mute(),
-        unmute: () => adTracker.unmute(),
-        startTracking: () => adTracker.start(),
-        stopTracking: () => adTracker.stop(),
-        updatePlayerTime: (time) => adTracker?.updatePlayerTime(time)
+        unmute: () => adTracker.unmute()
     };
 
     const playbackContext = {

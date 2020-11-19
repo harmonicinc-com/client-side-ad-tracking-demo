@@ -32,7 +32,6 @@ const walkTrackingEvents = (pods, time, handler) => {
 class AdTracker {
 
     constructor() {
-        this.playing = false;
         this.adPods = [];
         this.lastPlayerTime = null;
     }
@@ -93,18 +92,6 @@ class AdTracker {
         });
     }
 
-    start() {
-        if (!this.playing) {
-            this.playing = true;
-        }
-    }
-
-    stop() {
-        if (this.playing) {
-            this.playing = false;
-        }
-    }
-
     updatePlayerTime(time) {
         walkTrackingEvents(this.adPods, time, (trackingUrl, ad, pod) => {
             if (trackingUrl.reportingState === "IDLE" && 
@@ -118,6 +105,22 @@ class AdTracker {
 
     getAdPods() {
         return this.adPods;
+    }
+
+    pause() {
+        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+            if (trackingUrl.event === "pause") {
+                sendBeacon(trackingUrl);
+            }
+        });
+    }
+
+    resume() {
+        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+            if (trackingUrl.event === "resume") {
+                sendBeacon(trackingUrl);
+            }
+        });
     }
 
     mute() {
