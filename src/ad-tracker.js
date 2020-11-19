@@ -24,7 +24,7 @@ class AdTracker {
             if (!existingPod) {
                 existingPod = {
                     id: pod.id,
-                    start: pod.start,
+                    startTime: pod.startTime,
                     duration: pod.duration,
                     ads: []
                 };
@@ -48,7 +48,7 @@ class AdTracker {
             if (!existingAd) {
                 existingAd = {
                     id: ad.id,
-                    start: ad.start,
+                    startTime: ad.startTime,
                     duration: ad.duration,
                     trackingUrls: ad.trackingUrls.map(t => ({
                         event: t.event,
@@ -93,9 +93,9 @@ class AdTracker {
         };
 
         this.adPods.forEach((pod) => {
-            if (pod.start <= time && time <= pod.start + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+            if (pod.startTime <= time && time <= pod.startTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                 pod.ads.forEach((ad) => {
-                    if (ad.start <= time && time <= ad.start + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+                    if (ad.startTime <= time && time <= ad.startTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                         ad.trackingUrls.forEach((trackingUrl) => {
                             if (trackingUrl.reportingState === "IDLE" && 
                                 trackingUrl.startTime && time > trackingUrl.startTime &&

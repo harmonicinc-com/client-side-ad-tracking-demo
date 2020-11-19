@@ -68,7 +68,7 @@ function AdPodList() {
         <List>
           {pods.map((pod) =>
             <div key={pod.id}>
-              <ListItem className={pod.start < playheadInMs && playheadInMs < pod.start + pod.duration ? classes.podItemOnAir : classes.podItem}>
+              <ListItem className={pod.startTime < playheadInMs && playheadInMs < pod.startTime + pod.duration ? classes.podItemOnAir : classes.podItem}>
                 <ListItemIcon>
                   <FolderIcon />
                 </ListItemIcon>
@@ -77,14 +77,14 @@ function AdPodList() {
                     Ad Pod: {pod.id}
                   </div>
                   <div>
-                    Time: {new Date(pod.start).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
+                    Time: {new Date(pod.startTime).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
                   </div>
                 </ListItemText>
               </ListItem>
               <List key={pod.id + ".ads"}>
                 {pod.ads.map((ad) =>
                   <div key={ad.id}>
-                    <ListItem className={ad.start < playheadInMs && playheadInMs < ad.start + ad.duration ? classes.adItemOnAir : classes.adItem}>
+                    <ListItem className={ad.startTime < playheadInMs && playheadInMs < ad.startTime + ad.duration ? classes.adItemOnAir : classes.adItem}>
                       <ListItemIcon>
                         <MovieIcon />
                       </ListItemIcon>
@@ -93,7 +93,7 @@ function AdPodList() {
                           Ad: {ad.id}
                         </div>
                         <div>
-                          Time: {new Date(ad.start).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
+                          Time: {new Date(ad.startTime).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
                         </div>
                       </ListItemText>
                     </ListItem>

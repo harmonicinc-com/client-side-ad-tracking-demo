@@ -20,7 +20,7 @@ function PlayerContainer() {
     const playhead = session.presentationStartTime + session.currentTime * 1000;
 
     const timeToNextBreak = Math.min(Infinity,
-        ...session.adPods.filter(p => p.start > playhead).map(p => p.start)) - playhead;
+        ...session.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
 
     return (
         <div>
