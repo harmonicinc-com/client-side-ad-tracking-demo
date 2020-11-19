@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Client Side Ad Tracking Demo",
+  "name": "Harmonic Client Side Ad Tracking Demo Webapp",
   "icons": [
     {
       "src": "favicon.ico",
