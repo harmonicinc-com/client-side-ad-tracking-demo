@@ -1,3 +1,5 @@
+const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
+
 class AdTracker {
 
     constructor() {
@@ -91,9 +93,9 @@ class AdTracker {
         };
 
         this.adPods.forEach((pod) => {
-            if (pod.start < time && time < pod.start + pod.duration) {
+            if (pod.start <= time && time <= pod.start + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                 pod.ads.forEach((ad) => {
-                    if (ad.start < time && time < ad.start + ad.duration) {
+                    if (ad.start <= time && time <= ad.start + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                         ad.trackingUrls.forEach((trackingUrl) => {
                             if (trackingUrl.reportingState === "IDLE" && 
                                 trackingUrl.startTime && time > trackingUrl.startTime &&
