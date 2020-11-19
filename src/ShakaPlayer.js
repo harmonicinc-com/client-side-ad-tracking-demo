@@ -1,24 +1,31 @@
-import * as React from "react";
-import { makeStyles } from '@material-ui/core/styles';
+import { createRef, Component } from "react";
 import "shaka-player/dist/controls.css";
 import shaka from "shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
-const initPlayer = (pVideoRef, containerRef, props) => {
-    let ui = pVideoRef["ui"];
-    let controls;
-    let player;
+class ShakaPlayer extends Component {
+  constructor() {
+    super();
+    this.videoRef = createRef();
+    this.containerRef = createRef();
+    this.player = null;
+    this.lastMuted = false;
+  }
 
-    if (ui) {
-      controls = ui.getControls();
-      player = controls.getPlayer();
-    } else {
-      player = new shaka.Player(pVideoRef);
-      ui = new shaka.ui.Overlay(player, containerRef, pVideoRef);
-      controls = ui.getControls();
-    }
+  componentDidMount() {
+    window.muxjs = muxjs;
 
-    const config = {
+    const video = this.videoRef.current;
+    const container = this.containerRef.current;
+
+    this.player = new shaka.Player(video);
+    this.player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
+    this.player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
+    // player.configure('manifest.availabilityWindowOverride', 105.0);
+    this.lastMuted = video.muted;
+
+    const ui = new shaka.ui.Overlay(this.player, container, video);
+    ui.configure({
       controlPanelElements: [
         "rewind",
         "play_pause",
@@ -29,65 +36,45 @@ const initPlayer = (pVideoRef, containerRef, props) => {
         "fullscreen",
         "overflow_menu"
       ]
-    };
-    ui.configure(config);
+    });
 
-    if (props.src) {
-      player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
-      player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
-      // player.configure('manifest.availabilityWindowOverride', 105.0);
-      player.addEventListener("error", onError);
-      if (props.onTimeUpdate) {
-        pVideoRef.addEventListener('timeupdate', () => props.onTimeUpdate(pVideoRef.currentTime, pVideoRef, player));
+    video.addEventListener('timeupdate', () => this.props.onTimeUpdate?.(video.currentTime));
+    video.addEventListener('error', (err) => this.props.onError?.(err));
+    video.addEventListener('playing', () => this.props.onPlaying?.());
+    video.addEventListener('paused', () => this.props.onPaused?.());
+    video.addEventListener('volumechange', () => {
+      if (video.muted && !this.lastMuted) {
+        this.props.onMute?.();
+      } else if (!video.muted && this.lastMuted) {
+        this.props.onUnmute?.();
       }
-      if (props.onPlaying) {
-        pVideoRef.addEventListener('playing', () => props.onPlaying());
-      }
-      if (props.onPaused) {
-        pVideoRef.addEventListener('paused', () => props.onPaused());
-      }
-      controls.addEventListener("error", onError);
-      player.load(props.src);
-    }
-
-    return player;
-};
-
-const onError = (event: any) =>
-  console.error("Error code", event);
-
-const useStyles = makeStyles((theme) => ({
-  video: {
-    backgroundColor: 'black'
+      this.lastMuted = video.muted;
+    });
   }
-}));
 
-function ShakaPlayer(props) {
-  const containerRef = React.createRef();
-  const videoRef = React.createRef();
-  const classes = useStyles();
+  load(url) {
+    this.player.load(url);
+  }
 
-  React.useEffect(() => {
-    window.muxjs = muxjs;
-    const player = initPlayer(videoRef.current, containerRef.current, props);
-    return () => player.unload();
-  }, []);
+  unload() {
+    this.player.unload();
+  }
 
-  return (
-    <div>
-        <div
-            ref={containerRef}
-            style={{ maxWidth: props.width }}>
-            <video
-                data-shaka-player
-                ref={videoRef}
-                className={classes.video}
-                style={{ width: "100%", height: "100%" }}
-                autoPlay={true}
-            ></video>
-        </div>
-    </div>
-  );
+
+  render() {
+    return (
+      <div
+        ref={this.containerRef}
+        style={{ maxWidth: this.props.width }}>
+        <video
+            data-shaka-player
+            ref={this.videoRef}
+            style={{ width: "100%", height: "100%", backgroundColor: "black" }}
+            autoPlay={true}>
+        </video>
+      </div>
+    );
+  }
 }
 
 export default ShakaPlayer;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import AdTrackingContext from './AdTrackingContext';
 import AdTracker from './ad-tracker';
 import useInterval from './useInterval';
 
@@ -107,19 +108,27 @@ const SessionProvider = (props) => {
         unload: unload,
         updatePlayerTime: (currentTime) => {
             setCurrentTime(currentTime);
-            adTracker.updatePlayerTime(presentationStartTime + currentTime * 1000);
+            adTracker?.updatePlayerTime(presentationStartTime + currentTime * 1000);
         },
         setPlaybackStarted: () => {
-            adTracker.start();
+            adTracker?.start();
         },
         setPlaybackPaused: () => {
-            adTracker.stop();
+            adTracker?.stop();
         },
+    };
+
+    const adTrackingContext = {
+        adPods: adPods,
+        mute: () => adTracker.mute(),
+        unmute: () => adTracker.unmute()
     };
 
     return (
         <SessionContext.Provider value={value}>
-          {props.children}
+          <AdTrackingContext.Provider value={adTrackingContext}>
+            {props.children}
+          </AdTrackingContext.Provider>
         </SessionContext.Provider>
     );
 };

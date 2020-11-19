@@ -1,4 +1,4 @@
-import React from 'react';
+import { useContext } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -11,6 +11,7 @@ import ErrorIcon from '@material-ui/icons/Error';
 import HourglassFullIcon from '@material-ui/icons/HourglassFull';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import { SessionContext } from './SessionService';
+import AdTrackingContext from './AdTrackingContext';
 import './AdPodList.css'
 
 const useStyles = makeStyles((theme) => ({
@@ -56,9 +57,11 @@ const useStyles = makeStyles((theme) => ({
 function AdPodList() {
   const classes = useStyles();
 
-  const session = React.useContext(SessionContext);
+  const session = useContext(SessionContext);
 
-  const pods = session.adPods ? session.adPods : [];
+  const adTrackingContext = useContext(AdTrackingContext);
+
+  const pods = adTrackingContext.adPods ? adTrackingContext.adPods : [];
 
   const playheadInMs = session.presentationStartTime + session.currentTime * 1000;
 

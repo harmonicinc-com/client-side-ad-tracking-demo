@@ -1,5 +1,34 @@
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
 
+const sendBeacon = async (trackingUrl) => {
+    trackingUrl.reportingState = "REPORTING";
+
+    try {
+        const response = await fetch(trackingUrl.url);
+        if (response.status >= 200 && response.status <= 299) {
+            trackingUrl.reportingState = "DONE";
+        } else {
+            trackingUrl.reportingState = "ERROR";
+        }
+    } catch (err) {
+        trackingUrl.reportingState = "ERROR";
+    }
+};
+
+const walkTrackingEvents = (pods, time, handler) => {
+    pods.forEach((pod) => {
+        if (pod.startTime <= time && time <= pod.startTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+            pod.ads.forEach((ad) => {
+                if (ad.startTime <= time && time <= ad.startTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+                    ad.trackingUrls.forEach((trackingUrl) => {
+                        handler(trackingUrl, ad, pod);
+                    });
+                }
+            });
+        }
+    });
+}
+
 class AdTracker {
 
     constructor() {
@@ -77,34 +106,11 @@ class AdTracker {
     }
 
     updatePlayerTime(time) {
-        const sendBeacon = async (trackingUrl) => {
-            trackingUrl.reportingState = "REPORTING";
-
-            try {
-                const response = await fetch(trackingUrl.url);
-                if (response.status >= 200 && response.status <= 299) {
-                    trackingUrl.reportingState = "DONE";
-                } else {
-                    trackingUrl.reportingState = "ERROR";
-                }
-            } catch (err) {
-                trackingUrl.reportingState = "ERROR";
-            }
-        };
-
-        this.adPods.forEach((pod) => {
-            if (pod.startTime <= time && time <= pod.startTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
-                pod.ads.forEach((ad) => {
-                    if (ad.startTime <= time && time <= ad.startTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
-                        ad.trackingUrls.forEach((trackingUrl) => {
-                            if (trackingUrl.reportingState === "IDLE" && 
-                                trackingUrl.startTime && time > trackingUrl.startTime &&
-                                this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
-                                sendBeacon(trackingUrl);
-                            }
-                        });
-                    }
-                });
+        walkTrackingEvents(this.adPods, time, (trackingUrl, ad, pod) => {
+            if (trackingUrl.reportingState === "IDLE" && 
+                trackingUrl.startTime && time > trackingUrl.startTime &&
+                this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
+                sendBeacon(trackingUrl);
             }
         });
         this.lastPlayerTime = time;
@@ -112,6 +118,22 @@ class AdTracker {
 
     getAdPods() {
         return this.adPods;
+    }
+
+    mute() {
+        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+            if (trackingUrl.event === "mute") {
+                sendBeacon(trackingUrl);
+            }
+        });
+    }
+
+    unmute() {
+        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+            if (trackingUrl.event === "unmute") {
+                sendBeacon(trackingUrl);
+            }
+        });
     }
 
 }
