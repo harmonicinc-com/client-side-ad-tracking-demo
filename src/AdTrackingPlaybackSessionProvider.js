@@ -4,7 +4,7 @@ import useInterval from './useInterval';
 import AdTrackingContext from './AdTrackingContext';
 import SessionContext from './SessionContext';
 import PlaybackContext from './PlaybackContext';
-import AdTracker from './ad-tracker';
+import AdTracker from './AdTracker';
 
 const AdTrackingPlaybackSessionProvider = (props) => {
     const history = useHistory();
