@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import useInterval from './useInterval';
 import AdTrackingContext from './AdTrackingContext';
@@ -6,15 +6,14 @@ import SessionContext from './SessionContext';
 import PlaybackContext from './PlaybackContext';
 import AdTracker from './ad-tracker';
 
-let adTracker;
-
-let presentationStartTime;
-
 const AdTrackingPlaybackSessionProvider = (props) => {
     const history = useHistory();
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const urlQueryParam = searchParams.get("url");
+
+    const adTrackerRef = useRef();
+    const presentationStartTimeRef = useRef();
 
     const [sessionInfo, setSessionInfo] = useState({
         localSessionId: urlQueryParam ? new Date().toISOString() : null,
@@ -45,8 +44,11 @@ const AdTrackingPlaybackSessionProvider = (props) => {
             await fetch(manifestUrl.replace("index.m3u8", "01.m3u8"));
         }
 
-        adTracker = new AdTracker();
         setAdPods([]);
+        adTrackerRef.current = new AdTracker();
+        adTrackerRef.current.addUpdateListener(() => {
+            setAdPods([...adTrackerRef.current.getAdPods()]);  // trigger re-render
+        });
 
         setSessionInfo({
             localSessionId: new Date().toISOString(),
@@ -59,8 +61,13 @@ const AdTrackingPlaybackSessionProvider = (props) => {
     }
 
     const unload = () => {
-        adTracker = new AdTracker();
         setAdPods([]);
+        adTrackerRef.current = new AdTracker();
+        adTrackerRef.current.addUpdateListener(() => {
+            setAdPods([...adTrackerRef.current.getAdPods()]);  // trigger re-render
+        });
+
+        presentationStartTimeRef.current = null;
 
         setSessionInfo({
             localSessionId: null,
@@ -79,10 +86,9 @@ const AdTrackingPlaybackSessionProvider = (props) => {
                 }
                 const json = await response.json();
 
-                presentationStartTime = json.dashAvailabilityStartTime;
+                presentationStartTimeRef.current = json.dashAvailabilityStartTime;
 
-                adTracker.updatePods(json.pods || []);
-                setAdPods(adTracker.getAdPods());
+                adTrackerRef.current.updatePods(json.pods || []);
             } catch (err) {
                 console.error("Failed to refresh metadata", err);
             }
@@ -101,7 +107,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const sessionContext = {
         sessionInfo: sessionInfo,
-        presentationStartTime: presentationStartTime,
+        presentationStartTime: presentationStartTimeRef.current,
         load: (url) => {
             history.replace("?url=" + encodeURIComponent(url));
             loadMedia(url);
@@ -109,18 +115,18 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         unload: unload
     };
 
-    const adTrackingContext = {
-        adPods: adPods,
-        updatePlayerTime: (time) => adTracker?.updatePlayerTime(time),
-        pause: () => adTracker.pause(),
-        resume: () => adTracker.resume(),
-        mute: () => adTracker.mute(),
-        unmute: () => adTracker.unmute()
-    };
-
     const playbackContext = {
         currentTime: currentTime,
         updatePlayerTime: (currentTime) => setCurrentTime(currentTime)
+    };
+
+    const adTrackingContext = {
+        adPods: adPods,
+        updatePlayerTime: (time) => adTrackerRef.current?.updatePlayerTime(time),
+        pause: () => adTrackerRef.current.pause(),
+        resume: () => adTrackerRef.current.resume(),
+        mute: () => adTrackerRef.current.mute(),
+        unmute: () => adTrackerRef.current.unmute()
     };
 
     return (

@@ -26,7 +26,7 @@ function PlayerContainer() {
       console.error("Error from player", error);
     }
 
-    const playhead = sessionContext.presentationStartTime + playbackContext.currentTime * 1000;
+    const playhead = sessionContext.presentationStartTime ? sessionContext.presentationStartTime + playbackContext.currentTime * 1000 : null;
 
     const timeToNextBreak = Math.min(Infinity,
         ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
@@ -67,7 +67,7 @@ function PlayerContainer() {
                 Raw currentTime from video element: {playbackContext.currentTime.toFixed(1)}s
             </div>
             <div>
-                Playhead date time: {new Date(playhead).toLocaleString()}
+                Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}
             </div>
             <div>
                 Time to next ad break: {timeToNextBreak !== Infinity ? Math.ceil(timeToNextBreak/1000).toFixed(0) + 's' : '-'}
