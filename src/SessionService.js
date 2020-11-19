@@ -55,6 +55,14 @@ const SessionProvider = (props) => {
         await refreshMetadata(newAdTrackingMetadataUrl);
     }
 
+    const unload = () => {
+        setManifestUrl(null);
+        setAdTrackingMetadataUrl(null);
+        adTracker = new AdTracker();
+        setAdPods([]);
+        setLocalSessionId(null);
+    }
+
     const refreshMetadata = async (url) => {
         if (url) {
             const response = await fetch(url);
@@ -96,6 +104,7 @@ const SessionProvider = (props) => {
             history.replace("?url=" + encodeURIComponent(url));
             loadMedia(url);
         },
+        unload: unload,
         updatePlayerTime: (currentTime) => {
             setCurrentTime(currentTime);
             adTracker.updatePlayerTime(presentationStartTime + currentTime * 1000);

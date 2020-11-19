@@ -4,7 +4,10 @@ import { Box, Button, Link, TextField } from '@material-ui/core';
 import { SessionContext } from './SessionService';
 
 const useStyles = makeStyles((theme) => ({
-  root: {
+  buttons: {
+    '& > *': {
+      marginRight: theme.spacing(1),
+    },
   }
 }));
 
@@ -21,12 +24,19 @@ function InfoSection() {
     await session.load(urlInputRef.current.value);
   }
 
+  const unload = () => {
+    session.unload();
+  }
+
   return (
-    <div className={classes.root}>
+    <div>
       <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={session.mediaUrl} />
-      <Box width={1} paddingTop={2} display="flex" flexDirection="row">
+      <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">
         <Button variant="contained" color="primary" onClick={load}>
           Load
+        </Button>
+        <Button variant="contained" onClick={unload}>
+          Unload
         </Button>
       </Box>
       <Box width={1} paddingTop={2} display="flex" flexDirection="row">

@@ -5,7 +5,7 @@ import { SessionContext } from './SessionService';
 function PlayerContainer() {
     const session = React.useContext(SessionContext);
 
-    const updateTime = (time, video, player) => {
+    const updateTime = (time) => {
         session.updatePlayerTime(time);
     };
 
@@ -19,10 +19,8 @@ function PlayerContainer() {
 
     return (
         <div>
-            {session.localSessionId ?
-                <ShakaPlayer key={"player-" + session.localSessionId} src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
-                : null }
             <div>
+                <ShakaPlayer key={"player-" + session.localSessionId} src={session.manifestUrl} onTimeUpdate={updateTime} onPlaying={startTracker} onPaused={stopTracker} />
                 Raw currentTime from video element: {session.currentTime.toFixed(1)}s
             </div>
             <div>
