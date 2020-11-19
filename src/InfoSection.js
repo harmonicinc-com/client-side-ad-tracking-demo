@@ -1,7 +1,7 @@
-import React from 'react';
+import { useContext, useRef } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
 import { Box, Button, Link, TextField } from '@material-ui/core';
-import { SessionContext } from './SessionService';
+import SessionContext from './SessionContext';
 
 const useStyles = makeStyles((theme) => ({
   buttons: {
@@ -14,23 +14,25 @@ const useStyles = makeStyles((theme) => ({
 function InfoSection() {
   const classes = useStyles();
 
-  const session = React.useContext(SessionContext);
+  const sessionContext = useContext(SessionContext);
 
-  const urlInputRef = React.createRef();
+  const sessionInfo = sessionContext.sessionInfo;
+
+  const urlInputRef = useRef();
 
   const preventDefault = (event) => event.preventDefault();
 
   const load = async () => {
-    await session.load(urlInputRef.current.value);
+    await sessionContext.load(urlInputRef.current.value);
   }
 
   const unload = () => {
-    session.unload();
+    sessionContext.unload();
   }
 
   return (
     <div>
-      <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={session.mediaUrl} />
+      <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={sessionInfo.mediaUrl || ''} />
       <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">
         <Button variant="contained" color="primary" onClick={load}>
           Load
@@ -41,12 +43,12 @@ function InfoSection() {
       </Box>
       <Box width={1} paddingTop={2} display="flex" flexDirection="row">
         <Link href="#" color="inherit" onClick={preventDefault}>
-          {session.manifestUrl ? session.manifestUrl : ''}
+          {sessionInfo.manifestUrl ? sessionInfo.manifestUrl : ''}
         </Link>
       </Box>
       <Box width={1} paddingTop={1} display="flex" flexDirection="row">
         <Link href="#" color="inherit" onClick={preventDefault}>
-          {session.adTrackingMetadataUrl ? session.adTrackingMetadataUrl : ''}
+          {sessionInfo.adTrackingMetadataUrl ? sessionInfo.adTrackingMetadataUrl : ''}
         </Link>
       </Box>
     </div>

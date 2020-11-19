@@ -6,7 +6,7 @@ import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import AdPodList from './AdPodList';
-import { SessionProvider } from './SessionService';
+import AdTrackingPlaybackSessionProvider from './AdTrackingPlaybackSessionProvider';
 import PlayerContainer from './PlayerContainer';
 import InfoSection from './InfoSection';
 import { Route, BrowserRouter as Router } from 'react-router-dom';
@@ -25,7 +25,7 @@ function App() {
   return (
     <Router>
       <Route exact path="/">
-        <SessionProvider>
+        <AdTrackingPlaybackSessionProvider>
           <Container>
             <Grid container spacing={3}>
               <Grid item xs={12}>
@@ -51,7 +51,7 @@ function App() {
               </Grid>
             </Grid>
           </Container>
-        </SessionProvider>
+        </AdTrackingPlaybackSessionProvider>
       </Route>
     </Router>
   );

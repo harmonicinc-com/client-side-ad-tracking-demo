@@ -10,9 +10,10 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircle';
 import ErrorIcon from '@material-ui/icons/Error';
 import HourglassFullIcon from '@material-ui/icons/HourglassFull';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
-import { SessionContext } from './SessionService';
+import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
 import './AdPodList.css'
+import PlaybackContext from './PlaybackContext';
 
 const useStyles = makeStyles((theme) => ({
   itemText: {
@@ -57,13 +58,15 @@ const useStyles = makeStyles((theme) => ({
 function AdPodList() {
   const classes = useStyles();
 
-  const session = useContext(SessionContext);
+  const sessionContext = useContext(SessionContext);
+
+  const playbackContext = useContext(PlaybackContext);
 
   const adTrackingContext = useContext(AdTrackingContext);
 
   const pods = adTrackingContext.adPods ? adTrackingContext.adPods : [];
 
-  const playheadInMs = session.presentationStartTime + session.currentTime * 1000;
+  const playheadInMs = sessionContext.presentationStartTime + playbackContext.currentTime * 1000;
 
   return (
     <div className="ad-pod-list">

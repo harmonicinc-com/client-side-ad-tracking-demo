@@ -1,60 +1,58 @@
-import React, { useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import ShakaPlayer from './ShakaPlayer';
-import { SessionContext } from './SessionService';
+import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
+import PlaybackContext from './PlaybackContext';
 
 function PlayerContainer() {
-    const session = React.useContext(SessionContext);
+    const sessionContext = useContext(SessionContext);
 
-    const adTrackingContext = React.useContext(AdTrackingContext);
+    const sessionInfo = sessionContext.sessionInfo;
 
-    const shakaRef = React.createRef();
+    const playbackContext = useContext(PlaybackContext);
 
-    const localSessionRef = React.useRef(); 
+    const adTrackingContext = useContext(AdTrackingContext);
+
+    const shakaRef = useRef();
+
+    const localSessionRef = useRef(); 
 
     const updateTime = (time) => {
-        session.updatePlayerTime(time);
-    };
-
-    const startTracker = () => {
-        session.setPlaybackStarted();
-    }; 
-
-    const stopTracker = () => {
-        session.setPlaybackPaused();
+        playbackContext.updatePlayerTime(time);
+        adTrackingContext.updatePlayerTime(sessionContext.presentationStartTime + time * 1000);
     };
 
     const onError = (error) => {
       console.error("Error from player", error);
     }
 
-    const playhead = session.presentationStartTime + session.currentTime * 1000;
+    const playhead = sessionContext.presentationStartTime + playbackContext.currentTime * 1000;
 
     const timeToNextBreak = Math.min(Infinity,
-        ...session.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
+        ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
 
     useEffect(() => {
-        if (localSessionRef.current !== session.localSessionId) {
-            if (session.manifestUrl) {
-                shakaRef.current.load(session.manifestUrl);
+        if (shakaRef.current && localSessionRef.current !== sessionInfo.localSessionId) {
+            if (sessionInfo.manifestUrl) {
+                shakaRef.current.load(sessionInfo.manifestUrl);
             } else {
                 shakaRef.current.unload();
             }
-            localSessionRef.current = session.localSessionId
+            localSessionRef.current = sessionInfo.localSessionId
         }
-    }, [shakaRef, session.localSessionId, session.manifestUrl]);
+    }, [shakaRef, sessionInfo]);
 
     return (
         <div>
             <ShakaPlayer ref={shakaRef}
                 onTimeUpdate={updateTime}
-                onPlaying={startTracker}
-                onPaused={stopTracker}
+                onPlaying={() => adTrackingContext.startTracking()}
+                onPaused={() => adTrackingContext.stopTracking()}
                 onMute={() => adTrackingContext.mute()}
                 onUnmute={() => adTrackingContext.unmute()}
                 onError={onError}/>
             <div>
-                Raw currentTime from video element: {session.currentTime.toFixed(1)}s
+                Raw currentTime from video element: {playbackContext.currentTime.toFixed(1)}s
             </div>
             <div>
                 Playhead date time: {new Date(playhead).toLocaleString()}
