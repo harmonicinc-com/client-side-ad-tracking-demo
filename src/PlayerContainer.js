@@ -1,15 +1,12 @@
-import { useContext, useEffect, useRef } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import ShakaPlayer from './ShakaPlayer';
 import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
-import PlaybackContext from './PlaybackContext';
 
 function PlayerContainer() {
     const sessionContext = useContext(SessionContext);
 
     const sessionInfo = sessionContext.sessionInfo;
-
-    const playbackContext = useContext(PlaybackContext);
 
     const adTrackingContext = useContext(AdTrackingContext);
 
@@ -17,16 +14,27 @@ function PlayerContainer() {
 
     const localSessionRef = useRef(); 
 
+    const [rawCurrentTime, setRawCurrentTime] = useState(0);
+
+    const [playhead, setPlayhead] = useState(null);
+
     const updateTime = (time) => {
-        playbackContext.updatePlayerTime(time);
-        adTrackingContext.updatePlayerTime(sessionContext.presentationStartTime + time * 1000);
+        setRawCurrentTime(time);
+
+        if (sessionInfo.manifestUrl?.includes(".m3u8")) {
+            const clockTime = shakaRef.current.getPlayheadTimeAsDate()?.getTime() || 0;
+            adTrackingContext.updatePlayheadTime(clockTime);
+            setPlayhead(clockTime);
+        } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
+            const clockTime = sessionContext.presentationStartTime + time * 1000;
+            adTrackingContext.updatePlayheadTime(clockTime);
+            setPlayhead(clockTime);
+        }
     };
 
     const onError = (error) => {
       console.error("Error from player", error);
     }
-
-    const playhead = sessionContext.presentationStartTime ? sessionContext.presentationStartTime + playbackContext.currentTime * 1000 : null;
 
     const timeToNextBreak = Math.min(Infinity,
         ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
@@ -64,7 +72,7 @@ function PlayerContainer() {
                 }}
                 onError={onError}/>
             <div>
-                Raw currentTime from video element: {playbackContext.currentTime.toFixed(1)}s
+                Raw currentTime from video element: {rawCurrentTime.toFixed(1)}s
             </div>
             <div>
                 Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}

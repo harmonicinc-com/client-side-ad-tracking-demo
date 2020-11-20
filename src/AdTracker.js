@@ -86,28 +86,6 @@ class AdTracker {
         this.adPods = [];
         this.lastPlayerTime = null;
         this.listeners = [];
-        this.notifyListeners = () => {
-            this.listeners.forEach((listener) => {
-                listener();
-            });
-        };
-        this.sendBeacon = async (trackingUrl) => {
-            trackingUrl.reportingState = "REPORTING";
-            this.notifyListeners();
-        
-            try {
-                const response = await fetch(trackingUrl.url);
-                if (response.status >= 200 && response.status <= 299) {
-                    trackingUrl.reportingState = "DONE";
-                } else {
-                    trackingUrl.reportingState = "ERROR";
-                }
-                this.notifyListeners();
-            } catch (err) {
-                trackingUrl.reportingState = "ERROR";
-                this.notifyListeners();
-            }
-        };
     }
 
     addUpdateListener(listener) {
@@ -128,7 +106,7 @@ class AdTracker {
         }
     }
 
-    updatePlayerTime(time) {
+    updatePlayheadTime(time) {
         walkTrackingEvents(this.adPods, time, (trackingUrl, ad, pod) => {
             if (trackingUrl.reportingState === "IDLE" && 
                 trackingUrl.startTime && time > trackingUrl.startTime &&
@@ -174,6 +152,32 @@ class AdTracker {
             }
         });
     }
+
+    // private
+
+    notifyListeners() {
+        this.listeners.forEach((listener) => {
+            listener();
+        });
+    };
+    
+    async sendBeacon(trackingUrl) {
+        trackingUrl.reportingState = "REPORTING";
+        this.notifyListeners();
+    
+        try {
+            const response = await fetch(trackingUrl.url);
+            if (response.status >= 200 && response.status <= 299) {
+                trackingUrl.reportingState = "DONE";
+            } else {
+                trackingUrl.reportingState = "ERROR";
+            }
+            this.notifyListeners();
+        } catch (err) {
+            trackingUrl.reportingState = "ERROR";
+            this.notifyListeners();
+        }
+    };
 
 }
 

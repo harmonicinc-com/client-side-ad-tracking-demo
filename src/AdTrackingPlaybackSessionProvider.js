@@ -3,7 +3,6 @@ import { useHistory, useLocation } from 'react-router-dom';
 import useInterval from './useInterval';
 import AdTrackingContext from './AdTrackingContext';
 import SessionContext from './SessionContext';
-import PlaybackContext from './PlaybackContext';
 import AdTracker from './AdTracker';
 
 const AdTrackingPlaybackSessionProvider = (props) => {
@@ -21,7 +20,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         manifestUrl: null,
         adTrackingMetadataUrl: null,
     });
-    const [currentTime, setCurrentTime] = useState(NaN);
+    const [lastPlayheadTime, setLastPlayheadTime] = useState(0);
     const [adPods, setAdPods] = useState([]);
 
     const rewriteUrlToMetadataUrl = (url) => {
@@ -115,14 +114,13 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         unload: unload
     };
 
-    const playbackContext = {
-        currentTime: currentTime,
-        updatePlayerTime: (currentTime) => setCurrentTime(currentTime)
-    };
-
     const adTrackingContext = {
         adPods: adPods,
-        updatePlayerTime: (time) => adTrackerRef.current?.updatePlayerTime(time),
+        lastPlayheadTime: lastPlayheadTime || 0,
+        updatePlayheadTime: (time) => {
+            adTrackerRef.current?.updatePlayheadTime(time);
+            setLastPlayheadTime(time);
+        },
         pause: () => adTrackerRef.current.pause(),
         resume: () => adTrackerRef.current.resume(),
         mute: () => adTrackerRef.current.mute(),
@@ -131,11 +129,9 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     return (
         <SessionContext.Provider value={sessionContext}>
-          <PlaybackContext.Provider value={playbackContext}>
             <AdTrackingContext.Provider value={adTrackingContext}>
-              {props.children}
+                {props.children}
             </AdTrackingContext.Provider>
-          </PlaybackContext.Provider>
         </SessionContext.Provider>
     );
 };
