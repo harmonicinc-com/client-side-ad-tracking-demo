@@ -116,7 +116,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const adTrackingContext = {
         adPods: adPods,
-        lastPlayheadTime: lastPlayheadTime || 0,
+        lastPlayheadTime: lastPlayheadTime,
         updatePlayheadTime: (time) => {
             adTrackerRef.current?.updatePlayheadTime(time);
             setLastPlayheadTime(time);
