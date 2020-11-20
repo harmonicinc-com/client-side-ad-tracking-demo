@@ -3,7 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import useInterval from './useInterval';
 import AdTrackingContext from './AdTrackingContext';
 import SessionContext from './SessionContext';
-import AdTracker from './AdTracker';
+import SimpleAdTracker from './SimpleAdTracker';
 
 const AdTrackingPlaybackSessionProvider = (props) => {
     const history = useHistory();
@@ -44,7 +44,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         }
 
         setAdPods([]);
-        adTrackerRef.current = new AdTracker();
+        adTrackerRef.current = new SimpleAdTracker();
         adTrackerRef.current.addUpdateListener(() => {
             setAdPods([...adTrackerRef.current.getAdPods()]);  // trigger re-render
         });
@@ -61,7 +61,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const unload = () => {
         setAdPods([]);
-        adTrackerRef.current = new AdTracker();
+        adTrackerRef.current = new SimpleAdTracker();
         adTrackerRef.current.addUpdateListener(() => {
             setAdPods([...adTrackerRef.current.getAdPods()]);  // trigger re-render
         });

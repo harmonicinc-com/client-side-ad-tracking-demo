@@ -1,18 +1,5 @@
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
-
-const walkTrackingEvents = (pods, time, handler) => {
-    pods.forEach((pod) => {
-        if (pod.startTime <= time && time <= pod.startTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
-            pod.ads.forEach((ad) => {
-                if (ad.startTime <= time && time <= ad.startTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
-                    ad.trackingUrls.forEach((trackingUrl) => {
-                        handler(trackingUrl, ad, pod);
-                    });
-                }
-            });
-        }
-    });
-}
+const MAX_TOLERANCE_IN_SPEED = 2;
 
 const mergePods = (existingPods, pods) => {
     let updated = false;
@@ -80,11 +67,12 @@ const mergeAds = (existingAds, ads) => {
     return updated;
 }
 
-class AdTracker {
+class SimpleAdTracker {
 
     constructor() {
         this.adPods = [];
-        this.lastPlayerTime = null;
+        this.lastPlayheadTime = null;
+        this.lastPlayheadUpdateTime = null;
         this.listeners = [];
     }
 
@@ -107,14 +95,24 @@ class AdTracker {
     }
 
     updatePlayheadTime(time) {
-        walkTrackingEvents(this.adPods, time, (trackingUrl, ad, pod) => {
-            if (trackingUrl.reportingState === "IDLE" && 
-                trackingUrl.startTime && time > trackingUrl.startTime &&
-                this.lastPlayerTime && trackingUrl.startTime > this.lastPlayerTime) {
-                this.sendBeacon(trackingUrl);
+        const now = new Date().getTime();
+        if (this.lastPlayheadUpdateTime) {
+            if (now === this.lastPlayheadUpdateTime) {
+                return;
             }
-        });
-        this.lastPlayerTime = time;
+
+            const speed = (time - this.lastPlayheadTime) / (now - this.lastPlayheadUpdateTime);
+            if (speed > 0 && speed <= MAX_TOLERANCE_IN_SPEED) {
+                this.iterateTrackingEvents((trackingUrl) => {
+                    if (trackingUrl.startTime && trackingUrl.reportingState === "IDLE" &&
+                        this.lastPlayheadTime < trackingUrl.startTime && trackingUrl.startTime <= time) {
+                        this.sendBeacon(trackingUrl);
+                    }
+                }, this.lastPlayheadTime, time);
+            }
+        }
+        this.lastPlayheadTime = time;
+        this.lastPlayheadUpdateTime = now;
     }
 
     getAdPods() {
@@ -122,7 +120,7 @@ class AdTracker {
     }
 
     pause() {
-        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+        this.iterateTrackingEvents((trackingUrl) => {
             if (trackingUrl.event === "pause") {
                 this.sendBeacon(trackingUrl);
             }
@@ -130,7 +128,7 @@ class AdTracker {
     }
 
     resume() {
-        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+        this.iterateTrackingEvents((trackingUrl) => {
             if (trackingUrl.event === "resume") {
                 this.sendBeacon(trackingUrl);
             }
@@ -138,7 +136,7 @@ class AdTracker {
     }
 
     mute() {
-        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+        this.iterateTrackingEvents((trackingUrl) => {
             if (trackingUrl.event === "mute") {
                 this.sendBeacon(trackingUrl);
             }
@@ -146,7 +144,7 @@ class AdTracker {
     }
 
     unmute() {
-        walkTrackingEvents(this.adPods, this.lastPlayerTime, (trackingUrl) => {
+        this.iterateTrackingEvents((trackingUrl) => {
             if (trackingUrl.event === "unmute") {
                 this.sendBeacon(trackingUrl);
             }
@@ -161,6 +159,20 @@ class AdTracker {
         });
     };
     
+    iterateTrackingEvents(handler, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
+        this.adPods.forEach((pod) => {
+            if (pod.startTime <= time1 && time0 <= pod.startTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+                pod.ads.forEach((ad) => {
+                    if (ad.startTime <= time1 && time0 <= ad.startTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
+                        ad.trackingUrls.forEach((trackingUrl) => {
+                            handler(trackingUrl, ad, pod);
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     async sendBeacon(trackingUrl) {
         trackingUrl.reportingState = "REPORTING";
         this.notifyListeners();
@@ -181,4 +193,4 @@ class AdTracker {
 
 }
 
-export default AdTracker;
+export default SimpleAdTracker;
