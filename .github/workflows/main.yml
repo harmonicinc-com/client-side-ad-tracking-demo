@@ -15,5 +15,7 @@ jobs:
 
       - name: Run npm script
         run: |
+          git config user.name "Albert Cheung"
+          git config user.email "albert.cheung@harmonicinc.com"
           npm install
           npm run deploy
