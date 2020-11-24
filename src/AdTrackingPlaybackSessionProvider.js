@@ -7,6 +7,8 @@ import SessionContext from './SessionContext';
 import SimpleAdTracker from './SimpleAdTracker';
 
 const AdTrackingPlaybackSessionProvider = (props) => {
+    const AD_TRACING_METADATA_FILE_NAME = "metadata";
+
     const history = useHistory();
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -27,7 +29,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
     const [adPods, setAdPods] = useState([]);
 
     const rewriteUrlToMetadataUrl = (url) => {
-        return url.replace(/\/[^/?]+(\??[^/]*)$/, '/beacon$1');
+        return url.replace(/\/[^/?]+(\??[^/]*)$/, '/' + AD_TRACING_METADATA_FILE_NAME + '$1');
     }
 
     const loadMedia = async (url) => {
