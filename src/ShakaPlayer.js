@@ -28,10 +28,7 @@ class ShakaPlayer extends Component {
     const ui = new shaka.ui.Overlay(this.player, container, video);
     ui.configure({
       controlPanelElements: [
-        "rewind",
         "play_pause",
-        "fast_forward",
-        "time_and_duration",
         "mute",
         "volume",
         "fullscreen",
