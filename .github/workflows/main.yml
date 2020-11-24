@@ -15,4 +15,5 @@ jobs:
 
       - name: Run npm script
         run: |
+          npm install
           npm run deploy
