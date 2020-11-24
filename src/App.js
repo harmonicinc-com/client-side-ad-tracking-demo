@@ -10,7 +10,7 @@ import { DefaultErrorContextProvider } from './ErrorContext';
 import AdTrackingPlaybackSessionProvider from './AdTrackingPlaybackSessionProvider';
 import PlayerContainer from './PlayerContainer';
 import InfoSection from './InfoSection';
-import { Route, BrowserRouter as Router } from 'react-router-dom';
+import { Route, BrowserRouter } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -24,7 +24,7 @@ function App() {
   const classes = useStyles();
 
   return (
-    <Router>
+    <BrowserRouter basename={process.env.PUBLIC_URL}>
       <Route exact path="/">
         <DefaultErrorContextProvider>
           <AdTrackingPlaybackSessionProvider>
@@ -56,7 +56,7 @@ function App() {
           </AdTrackingPlaybackSessionProvider>
         </DefaultErrorContextProvider>
       </Route>
-    </Router>
+    </BrowserRouter>
   );
 }
 
