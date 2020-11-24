@@ -24,7 +24,7 @@ function App() {
   const classes = useStyles();
 
   return (
-    <BrowserRouter basename={process.env.PUBLIC_URL}>
+    <BrowserRouter basename="/client-side-ad-tracking-demo">
       <Route exact path="/">
         <DefaultErrorContextProvider>
           <AdTrackingPlaybackSessionProvider>
