@@ -2,7 +2,9 @@
 
 This project is a sample player webapp for demonstration of Client Side Ad Tracking with Harmonic's Personalized Media Manipulation solution.
 
-## Instructions
+Demo page: [https://harmonicinc-com.github.io/client-side-ad-tracking-demo/](https://harmonicinc-com.github.io/client-side-ad-tracking-demo/)
+
+## Instructions for local run
 
 In the project directory:
 
