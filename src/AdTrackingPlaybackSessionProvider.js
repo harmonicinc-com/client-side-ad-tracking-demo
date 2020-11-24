@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, useContext, useCallback } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import useInterval from './useInterval';
 import { ErrorContext } from './ErrorContext';
@@ -20,7 +20,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
     const presentationStartTimeRef = useRef();
 
     const [sessionInfo, setSessionInfo] = useState({
-        localSessionId: urlQueryParam ? new Date().toISOString() : null,
+        localSessionId: null,
         mediaUrl: urlQueryParam,
         manifestUrl: null,
         adTrackingMetadataUrl: null,
@@ -32,7 +32,26 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         return url.replace(/\/[^/?]+(\??[^/]*)$/, '/' + AD_TRACING_METADATA_FILE_NAME + '$1');
     }
 
-    const loadMedia = async (url) => {
+    const refreshMetadata = useCallback(async (url) => {
+        if (url) {
+            const response = await fetch(url);
+            try {
+                if (response.status < 200 || response.status > 299) {
+                    throw new Error(`Get unexpected response code ${response.status}`);
+                }
+                const json = await response.json();
+
+                presentationStartTimeRef.current = json.dashAvailabilityStartTime;
+
+                adTrackerRef.current.updatePods(json.pods || []);
+            } catch (err) {
+                console.error("Failed to download metadata for ad tracking", err);
+                errorContext.reportError("metadata.request.failed", "Failed to download metadata for ad tracking: " + err);
+            }
+        }
+    }, [errorContext]);
+
+    const loadMedia = useCallback(async (url) => {
         let manifestUrl, adTrackingMetadataUrl;
         try {
             const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
@@ -71,7 +90,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         });
 
         await refreshMetadata(adTrackingMetadataUrl);
-    }
+    }, [refreshMetadata, errorContext]);
 
     const unload = () => {
         setAdPods([]);
@@ -90,30 +109,11 @@ const AdTrackingPlaybackSessionProvider = (props) => {
         });
     }
 
-    const refreshMetadata = async (url) => {
-        if (url) {
-            const response = await fetch(url);
-            try {
-                if (response.status < 200 || response.status > 299) {
-                    throw new Error(`Get unexpected response code ${response.status}`);
-                }
-                const json = await response.json();
-
-                presentationStartTimeRef.current = json.dashAvailabilityStartTime;
-
-                adTrackerRef.current.updatePods(json.pods || []);
-            } catch (err) {
-                console.error("Failed to download metadata for ad tracking", err);
-                errorContext.reportError("metadata.request.failed", "Failed to download metadata for ad tracking: " + err);
-            }
-        }
-    }
-
     useEffect(() => {
-        if (sessionInfo.mediaUrl) {
+        if (sessionInfo.mediaUrl && !sessionInfo.localSessionId) {
             loadMedia(sessionInfo.mediaUrl);
         }
-    }, []);
+    }, [loadMedia, sessionInfo]);
 
     useInterval(() => {
         refreshMetadata(sessionInfo.adTrackingMetadataUrl);
