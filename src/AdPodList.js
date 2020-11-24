@@ -19,24 +19,22 @@ const useStyles = makeStyles((theme) => ({
     textOverflow: "ellipsis"
   },
   podItem: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(0)
   },
   podItemOnAir: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(0),
-    backgroundColor: "#368cee"
+    backgroundColor: "#42a5f5",
+    '&:hover': {
+      background: "#2196f3",
+    }
   },
   adItem: {
     paddingLeft: theme.spacing(4),
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(0)
   },
   adItemOnAir: {
     paddingLeft: theme.spacing(4),
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(0),
-    backgroundColor: "#71B4FF"
+    backgroundColor: "#90caf9",
+    '&:hover': {
+      background: "#64b5f6",
+    }
   },
   trackingUrlItem: {
     paddingLeft: theme.spacing(8),
