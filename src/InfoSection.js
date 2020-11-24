@@ -1,6 +1,8 @@
 import { useContext, useRef } from 'react';
 import { makeStyles } from '@material-ui/core/styles';
-import { Box, Button, Link, TextField, Typography } from '@material-ui/core';
+import { Box, Button, Link, Snackbar, TextField, Typography } from '@material-ui/core';
+import MuiAlert from '@material-ui/lab/Alert';
+import { ErrorContext } from './ErrorContext';
 import SessionContext from './SessionContext';
 
 const useStyles = makeStyles((theme) => ({
@@ -13,6 +15,8 @@ const useStyles = makeStyles((theme) => ({
 
 function InfoSection() {
   const classes = useStyles();
+
+  const errorContext = useContext(ErrorContext);
 
   const sessionContext = useContext(SessionContext);
 
@@ -30,8 +34,22 @@ function InfoSection() {
     sessionContext.unload();
   }
 
+  const closeAlert = (errorKey) => {
+    errorContext.acknowledgeError(errorKey);
+  }
+
   return (
     <div>
+      {
+        Object.entries(errorContext.errors).map(([key, error]) => (
+          <Snackbar anchorOrigin={{ vertical: 'top', horizontal: 'right' }} open={!error.acknowledged}>
+            <MuiAlert elevation={6} variant="filled" severity="error" onClose={() => closeAlert(key)}>
+              {error.message}
+            </MuiAlert>
+          </Snackbar>  
+        ))
+      }
+
       <Typography variant="h5" gutterBottom>
         Harmonic Client Side Ad Tracking Demo
       </Typography>

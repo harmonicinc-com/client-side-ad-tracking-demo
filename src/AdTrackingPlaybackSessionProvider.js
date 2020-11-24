@@ -1,6 +1,7 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
 import useInterval from './useInterval';
+import { ErrorContext } from './ErrorContext';
 import AdTrackingContext from './AdTrackingContext';
 import SessionContext from './SessionContext';
 import SimpleAdTracker from './SimpleAdTracker';
@@ -10,6 +11,8 @@ const AdTrackingPlaybackSessionProvider = (props) => {
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
     const urlQueryParam = searchParams.get("url");
+    
+    const errorContext = useContext(ErrorContext);
 
     const adTrackerRef = useRef();
     const presentationStartTimeRef = useRef();
@@ -29,13 +32,22 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const loadMedia = async (url) => {
         let manifestUrl, adTrackingMetadataUrl;
-        const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
-        if (response.redirected) {
-            manifestUrl = response.url;
-            adTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
-        } else {
-            manifestUrl = url;
-            adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+        try {
+            const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
+            if (response.status < 200 || response.status > 299) {
+                throw new Error(`Get unexpected response code ${response.status}`);
+            }
+
+            if (response.redirected) {
+                manifestUrl = response.url;
+                adTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
+            } else {
+                manifestUrl = url;
+                adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+            }
+        } catch (err) {
+            errorContext.reportError("manifest.request.failed", "Failed to download manifest: " + err);
+            return;
         }
 
         // workaround HLS issue that video stream needs to get first otherwise there is error "Manipulated manifest does not contain any segments"
@@ -81,7 +93,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
             const response = await fetch(url);
             try {
                 if (response.status < 200 || response.status > 299) {
-                    throw new Error(`Get unexpected response code {response.status}`);
+                    throw new Error(`Get unexpected response code ${response.status}`);
                 }
                 const json = await response.json();
 
@@ -89,7 +101,8 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
                 adTrackerRef.current.updatePods(json.pods || []);
             } catch (err) {
-                console.error("Failed to refresh metadata", err);
+                console.error("Failed to download metadata for ad tracking", err);
+                errorContext.reportError("metadata.request.failed", "Failed to download metadata for ad tracking: " + err);
             }
         }
     }
