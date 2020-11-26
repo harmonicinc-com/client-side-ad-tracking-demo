@@ -22,7 +22,6 @@ class ShakaPlayer extends Component {
     this.player = new shaka.Player(video);
     this.player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
     this.player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
-    // this.player.configure('manifest.availabilityWindowOverride', 105.0);
     this.lastMuted = video.muted;
 
     const ui = new shaka.ui.Overlay(this.player, container, video);
@@ -36,7 +35,6 @@ class ShakaPlayer extends Component {
       ]
     });
 
-    video.addEventListener('timeupdate', () => this.props.onTimeUpdate?.(video.currentTime));
     video.addEventListener('error', (err) => this.props.onError?.(err));
     video.addEventListener('playing', () => {
       if (this.paused) {
@@ -70,6 +68,10 @@ class ShakaPlayer extends Component {
 
   getPlayheadTimeAsDate() {
     return this.player.getPlayheadTimeAsDate();
+  }
+
+  getRawVideoTime() {
+    return this.videoRef.current.currentTime;
   }
 
   render() {

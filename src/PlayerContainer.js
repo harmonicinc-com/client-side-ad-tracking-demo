@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import ShakaPlayer from './ShakaPlayer';
 import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
+import useInterval from './useInterval';
 
 function PlayerContainer() {
     const sessionContext = useContext(SessionContext);
@@ -39,6 +40,11 @@ function PlayerContainer() {
     const timeToNextBreak = Math.min(Infinity,
         ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
 
+    useInterval(() => {
+        const time = shakaRef.current.getRawVideoTime();
+        updateTime(time);
+    }, 500);
+
     useEffect(() => {
         if (shakaRef.current && localSessionRef.current !== sessionInfo.localSessionId) {
             if (sessionInfo.manifestUrl) {
@@ -53,7 +59,6 @@ function PlayerContainer() {
     return (
         <div>
             <ShakaPlayer ref={shakaRef}
-                onTimeUpdate={updateTime}
                 onPaused={() => {
                     console.log('playback paused');
                     adTrackingContext.pause();
@@ -72,7 +77,7 @@ function PlayerContainer() {
                 }}
                 onError={onError}/>
             <div>
-                Raw currentTime from video element: {rawCurrentTime.toFixed(1)}s
+                Raw currentTime from video element: {rawCurrentTime.toFixed(0)}s
             </div>
             <div>
                 Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}

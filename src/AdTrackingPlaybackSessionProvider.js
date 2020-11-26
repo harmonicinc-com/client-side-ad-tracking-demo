@@ -17,7 +17,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
     const errorContext = useContext(ErrorContext);
 
     const adTrackerRef = useRef();
-    const presentationStartTimeRef = useRef();
+    const [presentationStartTime, setPresentationStartTime] = useState(null);
 
     const [sessionInfo, setSessionInfo] = useState({
         localSessionId: null,
@@ -41,7 +41,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
                 }
                 const json = await response.json();
 
-                presentationStartTimeRef.current = json.dashAvailabilityStartTime;
+                setPresentationStartTime(json.dashAvailabilityStartTime);
 
                 adTrackerRef.current.updatePods(json.pods || []);
             } catch (err) {
@@ -99,7 +99,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
             setAdPods([...adTrackerRef.current.getAdPods()]);  // trigger re-render
         });
 
-        presentationStartTimeRef.current = null;
+        setPresentationStartTime(null);
 
         setSessionInfo({
             localSessionId: null,
@@ -121,7 +121,7 @@ const AdTrackingPlaybackSessionProvider = (props) => {
 
     const sessionContext = {
         sessionInfo: sessionInfo,
-        presentationStartTime: presentationStartTimeRef.current,
+        presentationStartTime: presentationStartTime,
         load: (url) => {
             history.replace("?url=" + encodeURIComponent(url));
             loadMedia(url);
