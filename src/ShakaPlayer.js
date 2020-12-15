@@ -37,14 +37,18 @@ class ShakaPlayer extends Component {
 
     video.addEventListener('error', (err) => this.props.onError?.(err));
     video.addEventListener('playing', () => {
-      if (this.paused) {
-        this.props.onResume?.();
-        this.paused = false;
+      if (!ui.getControls().isSeeking()) {
+        if (this.paused) {
+          this.props.onResume?.();
+          this.paused = false;
+        }
       }
     });
     video.addEventListener('pause', () => {
-      this.props.onPaused?.();
-      this.paused = true;
+      if (!ui.getControls().isSeeking()) {
+        this.props.onPaused?.();
+        this.paused = true;
+      }
     });
     video.addEventListener('volumechange', () => {
       if (video.muted && !this.lastMuted) {
