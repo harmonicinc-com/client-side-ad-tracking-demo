@@ -1,6 +1,6 @@
 import { createRef, Component } from "react";
-import "shaka-player/dist/controls.css";
-import shaka from "shaka-player/dist/shaka-player.ui.js";
+import "@harmonicinc/shaka-player/dist/controls.css";
+import shaka from "@harmonicinc/shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
 class ShakaPlayer extends Component {
