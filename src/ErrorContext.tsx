@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
+import ErrorContextInterface, {Errors} from "../types/ErrorContextInterface";
 
-const ErrorContext = React.createContext({
+const ErrorContext = React.createContext<ErrorContextInterface>({
     errors: {},
-    reportError: (key, message) => {},
-    acknowledgeError: (key) => {}
+    reportError: () => {},
+    acknowledgeError: () => {}
 });
 
-function DefaultErrorContextProvider(props) {
-    const [errors, setErrors] = useState({});
+function DefaultErrorContextProvider(props: any) {
+    const [errors, setErrors] = useState<Errors>({});
 
-    const reportError = (key, message) => {
+    const reportError = (key: string, message: string) => {
         setErrors({
             ...errors,
             [key]: {
@@ -19,7 +20,7 @@ function DefaultErrorContextProvider(props) {
         });
     }
 
-    const acknowledgeError = (key) => {
+    const acknowledgeError = (key: string) => {
         const error = errors[key];
         if (error) {
             setErrors({

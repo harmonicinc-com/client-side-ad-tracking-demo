@@ -1,9 +1,14 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import CssBaseline from '@material-ui/core/CssBaseline';
+import CssBaseline from '@mui/material/CssBaseline';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+
+if (process.env.NODE_ENV === 'production') {
+    console.log = () => {}
+    console.debug = () => {}
+}
 
 ReactDOM.render(
   <React.StrictMode>
