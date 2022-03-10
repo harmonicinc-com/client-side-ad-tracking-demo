@@ -1,17 +1,19 @@
 import { useContext, useState } from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import { Collapse, List, ListItem, ListItemText, ListItemIcon } from '@material-ui/core';
-import MovieIcon from '@material-ui/icons/Movie';
-import FolderIcon from '@material-ui/icons/Folder';
-import CheckCircleIcon from '@material-ui/icons/CheckCircle';
-import ErrorIcon from '@material-ui/icons/Error';
-import HourglassFullIcon from '@material-ui/icons/HourglassFull';
-import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
+import makeStyles from '@mui/styles/makeStyles';
+import { Collapse, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
+import MovieIcon from '@mui/icons-material/Movie';
+import FolderIcon from '@mui/icons-material/Folder';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import HourglassFullIcon from '@mui/icons-material/HourglassFull';
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
+import ExpandLess from '@mui/icons-material/ExpandLess';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import AdTrackingContext from './AdTrackingContext';
+import {theme} from "./App";
+import {Ad, AdBreak} from "../types/AdBeacon";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   itemText: {
     fontSize: 13,
     whiteSpace: "nowrap",
@@ -54,15 +56,19 @@ function AdPodList() {
 
   const adTrackingContext = useContext(AdTrackingContext);
 
-  const [expandPods, setExpandPods] = useState({});
+  if (adTrackingContext === undefined) {
+    throw new Error('AdTrackingContext is undefined');
+  }
 
-  const [expandAds, setExpandAds] = useState({});
+  const [expandPods, setExpandPods] = useState<{[key: string]: boolean}>({});
 
-  const pods = adTrackingContext.adPods ? adTrackingContext.adPods : [];
+  const [expandAds, setExpandAds] = useState<{[key: string]: boolean}>({});
+
+  const pods = adTrackingContext.adPods || [];
 
   const playheadInMs = adTrackingContext.lastPlayheadTime;
 
-  const shouldExpandPod = (pod) => {
+  const shouldExpandPod = (pod: AdBreak): boolean => {
     const keepPastPodFor = 2000;
     if (pod.id in expandPods) {
       return expandPods[pod.id];
@@ -71,7 +77,7 @@ function AdPodList() {
     }
   }
 
-  const toggleExpandPod = (pod) => {
+  const toggleExpandPod = (pod: AdBreak) => {
     const newState = {
       ...expandPods,
       [pod.id]: !shouldExpandPod(pod)
@@ -82,7 +88,7 @@ function AdPodList() {
     setExpandPods(newState);
   }
 
-  const shouldExpandAd = (ad, pod) => {
+  const shouldExpandAd = (ad: Ad, pod: AdBreak) => {
     const keepPastAdFor = 2000;
     if (pod.id + '/' + ad.id in expandAds) {
       return expandAds[pod.id + '/' + ad.id];
@@ -91,7 +97,7 @@ function AdPodList() {
     }
   }
 
-  const toggleExpandAd = (ad, pod) => {
+  const toggleExpandAd = (ad: Ad, pod: AdBreak) => {
     const newState = {
       ...expandAds,
       [pod.id + '/' + ad.id]: !shouldExpandAd(ad, pod)
@@ -142,8 +148,8 @@ function AdPodList() {
                       </ListItem>
                       <Collapse key={ad.id + ".trackingUrls"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
-                          {ad.trackingUrls ? 
-                            ad.trackingUrls.map((trackingUrl,index) =>
+                          {ad.trackingEvents ?
+                            ad.trackingEvents.map((trackingUrl,index) =>
                               <ListItem key={index} className={classes.trackingUrlItem}>
                                 <ListItemIcon>
                                   {trackingUrl.reportingState === "IDLE" ? <RadioButtonUncheckedIcon /> : null}
@@ -156,7 +162,7 @@ function AdPodList() {
                                     Event: {trackingUrl.event}
                                   </div>
                                   <div>
-                                    URL: {trackingUrl.url}
+                                    URL: {trackingUrl.signalingUrls}
                                   </div>
                                   {trackingUrl.startTime ?
                                     <div>

@@ -1,11 +1,23 @@
-import { createRef, Component } from "react";
+import React, {Component, createRef} from "react";
 import "@harmonicinc/shaka-player/dist/controls.css";
-import shaka from "@harmonicinc/shaka-player/dist/shaka-player.ui.js";
 import muxjs from 'mux.js';
 
-class ShakaPlayer extends Component {
-  constructor() {
-    super();
+import "@harmonicinc/shaka-player/dist/shaka-player.ui";
+// @ts-ignore
+import shaka from "@harmonicinc/shaka-player/dist/shaka-player.ui";
+import ShakaPlayerInterface from "../types/ShakaPlayerInterface";
+import ShakaPlayerProps from "../types/ShakaPlayerProps";
+
+class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInterface {
+  player: shaka.Player | null;
+
+  private readonly videoRef: React.RefObject<HTMLVideoElement>;
+  private readonly containerRef: React.RefObject<HTMLDivElement>;
+  private lastMuted: boolean;
+  private paused: boolean;
+
+  constructor(props: ShakaPlayerProps) {
+    super(props);
     this.videoRef = createRef();
     this.containerRef = createRef();
     this.player = null;
@@ -13,16 +25,21 @@ class ShakaPlayer extends Component {
     this.paused = false;
   }
 
+
   componentDidMount() {
     window.muxjs = muxjs;
 
     const video = this.videoRef.current;
     const container = this.containerRef.current;
 
+    if (!video || !container) return;
+
     this.player = new shaka.Player(video);
     this.player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
     this.player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
     this.lastMuted = video.muted;
+
+    if (!this.player) return;
 
     const ui = new shaka.ui.Overlay(this.player, container, video);
     ui.configure({
@@ -37,7 +54,7 @@ class ShakaPlayer extends Component {
 
     video.addEventListener('error', (err) => this.props.onError?.(err));
     video.addEventListener('playing', () => {
-      if (!ui.getControls().isSeeking()) {
+      if (!ui.getControls()?.isSeeking()) {
         if (this.paused) {
           this.props.onResume?.();
           this.paused = false;
@@ -45,7 +62,7 @@ class ShakaPlayer extends Component {
       }
     });
     video.addEventListener('pause', () => {
-      if (!ui.getControls().isSeeking()) {
+      if (!ui.getControls()?.isSeeking()) {
         this.props.onPaused?.();
         this.paused = true;
       }
@@ -60,22 +77,26 @@ class ShakaPlayer extends Component {
     });
   }
 
-  load(url) {
-    this.player.load(url);
+  load(url: string) {
+    this.player?.load(url);
     this.paused = false;
   }
 
   unload() {
-    this.player.unload();
+    this.player?.unload();
     this.paused = false;
   }
 
   getPlayheadTimeAsDate() {
-    return this.player.getPlayheadTimeAsDate();
+    return this.player?.getPlayheadTimeAsDate() || null;
   }
 
   getRawVideoTime() {
-    return this.videoRef.current.currentTime;
+    return this.videoRef.current?.currentTime || null;
+  }
+
+  getPresentationLatencyInfo(): {type: string, latency: number, wallClock: Date} {
+    return this.player?.getPresentationLatencyInfo() || null;
   }
 
   render() {

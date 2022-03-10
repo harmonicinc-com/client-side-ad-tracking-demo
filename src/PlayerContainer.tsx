@@ -3,37 +3,51 @@ import ShakaPlayer from './ShakaPlayer';
 import SessionContext from './SessionContext';
 import AdTrackingContext from './AdTrackingContext';
 import useInterval from './useInterval';
+import SessionContextInterface from "../types/SessionContextInterface";
+import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
 
 function PlayerContainer() {
-    const sessionContext = useContext(SessionContext);
+    const sessionContext = useContext<SessionContextInterface | undefined>(SessionContext);
+
+    if (sessionContext === undefined) {
+        throw new Error('SessionContext is undefined');
+    }
 
     const sessionInfo = sessionContext.sessionInfo;
 
-    const adTrackingContext = useContext(AdTrackingContext);
+    const adTrackingContext = useContext<SimpleAdTrackerInterface | undefined>(AdTrackingContext);
 
-    const shakaRef = useRef();
+    if (adTrackingContext === undefined) {
+        throw new Error('SessionContext is undefined');
+    }
 
-    const localSessionRef = useRef(); 
+    const shakaRef = useRef<ShakaPlayer>(null);
+
+    const localSessionRef = useRef<any>();
 
     const [rawCurrentTime, setRawCurrentTime] = useState(0);
 
-    const [playhead, setPlayhead] = useState(null);
+    const [playhead, setPlayhead] = useState(0);
 
-    const updateTime = (time) => {
+    const updateTime = (time: number) => {
         setRawCurrentTime(time);
 
         if (sessionInfo.manifestUrl?.includes(".m3u8")) {
-            const clockTime = shakaRef.current.getPlayheadTimeAsDate()?.getTime() || 0;
+            const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
+            adTrackingContext.updateRawPlayheadTime(clockTime);
             adTrackingContext.updatePlayheadTime(clockTime);
             setPlayhead(clockTime);
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
-            const clockTime = sessionContext.presentationStartTime + time * 1000;
+            const prftClockTime = shakaRef.current?.getPresentationLatencyInfo()?.wallClock.getTime() || 0;
+            const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
+            adTrackingContext.updateRawPlayheadTime(time * 1000);
             adTrackingContext.updatePlayheadTime(clockTime);
+            adTrackingContext.updatePrftPlayheadTime(prftClockTime);
             setPlayhead(clockTime);
         }
     };
 
-    const onError = (error) => {
+    const onError = (error: ErrorEvent) => {
       console.error("Error from player", error);
     }
 
@@ -41,8 +55,8 @@ function PlayerContainer() {
         ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
 
     useInterval(() => {
-        const time = shakaRef.current.getRawVideoTime();
-        updateTime(time);
+        const time = shakaRef.current?.getRawVideoTime();
+        if (time) updateTime(time);
     }, 500);
 
     useEffect(() => {
@@ -77,7 +91,7 @@ function PlayerContainer() {
                 }}
                 onError={onError}/>
             <div>
-                Raw currentTime from video element: {rawCurrentTime.toFixed(0)}s
+                Raw currentTime from video element: {rawCurrentTime ? rawCurrentTime.toFixed(0) : 0}s
             </div>
             <div>
                 Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}
