@@ -99,6 +99,10 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
     return this.player?.getPresentationLatencyInfo() || null;
   }
 
+  getPresentationStartTime(): Date {
+    return this.player?.getPresentationStartTimeAsDate()
+  }
+
   render() {
     return (
       <div

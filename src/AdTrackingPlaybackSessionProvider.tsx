@@ -24,7 +24,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const errorContext = useContext<ErrorContextInterface>(ErrorContext);
 
     const adTrackerRef = useRef<SimpleAdTracker>();
-    const [presentationStartTime, setPresentationStartTime] = useState(null);
+    const [presentationStartTime, setPresentationStartTime] = useState(0);
 
     const [sessionInfo, setSessionInfo] = useState({
         localSessionId: "",
@@ -33,7 +33,6 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         adTrackingMetadataUrl: "",
     });
     const [lastPlayheadTime, setLastPlayheadTime] = useState(0);
-    const [lastRawPlayheadTime, setLastRawPlayheadTime] = useState(0);
     const [lastPrftPlayheadTime, setLastPrftPlayheadTime] = useState(0);
     const [adPods, setAdPods] = useState<any>([]);
     const [lastDataRange, setLastDataRange] = useState<DataRange>({
@@ -135,7 +134,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             setAdPods([...pods]);  // trigger re-render
         });
 
-        setPresentationStartTime(null);
+        setPresentationStartTime(0);
 
         setSessionInfo({
             localSessionId: "",
@@ -161,21 +160,21 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         }
 
         console.log(`PRFT: ${lastPrftPlayheadTime}; In range: ${isInRange(lastPrftPlayheadTime, true)}`);
-        console.log(`Raw: ${lastRawPlayheadTime}; In range: ${isInRange((lastRawPlayheadTime), false)}`);
+        console.log(`Raw: ${lastPlayheadTime}; In range: ${isInRange((lastPlayheadTime), false)}`);
 
         let url = sessionInfo.adTrackingMetadataUrl;
         if (!url) return;
 
-        if (lastPrftPlayheadTime > 0) {
+        if (lastDataRange.prftStart && lastDataRange.prftEnd && lastPrftPlayheadTime > 0) {
             if (!isInRange(lastPrftPlayheadTime, true) &&
                 !(await refreshMetadata(url, lastPrftPlayheadTime, true))) {
                     url = `${url}&prftStart=${lastPrftPlayheadTime}`;
                     refreshMetadata(url);
             }
-        } else if (lastRawPlayheadTime &&
-            !isInRange((lastRawPlayheadTime), false) &&
-            !(await refreshMetadata(url, lastRawPlayheadTime, false))) {
-            url = `${url}&start=${lastRawPlayheadTime}`;
+        } else if (lastPlayheadTime &&
+            !isInRange((lastPlayheadTime), false) &&
+            !(await refreshMetadata(url, lastPlayheadTime, false))) {
+            url = `${url}&start=${lastPlayheadTime}`;
             refreshMetadata(url);
         }
     }, 4000);
@@ -192,17 +191,18 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
     const adTrackingContext: SimpleAdTrackerInterface = {
         adPods: adPods,
-        lastPlayheadTime: lastPlayheadTime,
+        lastPlayheadTime,
+        presentationStartTime,
         updatePlayheadTime: (time) => {
-            adTrackerRef.current?.updatePlayheadTime(time);
             setLastPlayheadTime(time);
         },
         updatePrftPlayheadTime: (time) => {
             setLastPrftPlayheadTime(time);
         },
-        updateRawPlayheadTime: (time) => {
-            setLastRawPlayheadTime(time);
+        updatePresentationStartTime: (time) => {
+            setPresentationStartTime(time);
         },
+        needSendBeacon: (time) => adTrackerRef.current?.needSendBeacon(time),
         pause: () => adTrackerRef.current?.pause(),
         resume: () => adTrackerRef.current?.resume(),
         mute: () => adTrackerRef.current?.mute(),

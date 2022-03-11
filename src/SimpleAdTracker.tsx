@@ -3,6 +3,9 @@ import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
 
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
 const MAX_TOLERANCE_IN_SPEED = 2;
+// Allow event to be emitted <tolerance> ms after its start time
+// Used for events that have zero duration
+const MAX_TOLERANCE_EVENT_END_TIME_MS = 500;
 
 const mergePods = (existingPods: AdBreak[], pods: AdBreak[]) => {
     let updated = false;
@@ -55,6 +58,7 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
                 trackingEvents: ad.trackingEvents.map(t => ({
                     event: t.event,
                     startTime: t.prftStartTime || t.startTime,
+                    duration: t.duration,
                     signalingUrls: t.signalingUrls,
                     reportingState: "IDLE"
                 }))
@@ -73,12 +77,14 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
 export default class SimpleAdTracker implements SimpleAdTrackerInterface {
     adPods: AdBreak[];
     lastPlayheadTime: number;
+    presentationStartTime: number;
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
 
     constructor() {
         this.adPods = [];
         this.lastPlayheadTime = 0;
+        this.presentationStartTime = 0;
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
     }
@@ -101,7 +107,7 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         }
     }
 
-    needSendBeacon(time: number, prft: boolean) {
+    needSendBeacon(time: number) {
         const now = new Date().getTime();
         if (this.lastPlayheadUpdateTime) {
             if (now === this.lastPlayheadUpdateTime) {
@@ -111,9 +117,11 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
             const speed = (time - this.lastPlayheadTime) / (now - this.lastPlayheadUpdateTime);
             if (speed > 0 && speed <= MAX_TOLERANCE_IN_SPEED) {
                 this.iterateTrackingEvents((trackingUrl) => {
-                    const startTime = prft ? trackingUrl.prftStartTime : trackingUrl.startTime;
-                    if (startTime && trackingUrl.reportingState === "IDLE" &&
-                        this.lastPlayheadTime < startTime && startTime <= time) {
+                    const startTime = trackingUrl.startTime;
+                    const endTime = startTime + (trackingUrl.duration || MAX_TOLERANCE_EVENT_END_TIME_MS);
+                    if (endTime && trackingUrl.reportingState === "IDLE" &&
+                        startTime <= time && time <= endTime
+                    ) {
                         this.sendBeacon(trackingUrl);
                     }
                 }, this.lastPlayheadTime, time);
@@ -124,14 +132,20 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
     }
 
     updatePlayheadTime(time: number) {
-        this.needSendBeacon(time, false);
+        this.needSendBeacon(time);
     }
 
     updatePrftPlayheadTime(time: number): void {
-        this.needSendBeacon(time, true);
+        this.needSendBeacon(time);
     }
 
-    updateRawPlayheadTime(time: number): void {}
+    updateRawPlayheadTime(time: number): void {
+        this.needSendBeacon(time);
+    }
+
+    updatePresentationStartTime(time: number): void {
+        this.presentationStartTime = time;
+    }
 
     getAdPods() {
         return this.adPods;
@@ -177,12 +191,12 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         });
     };
 
-    iterateTrackingEvents(handler: (a: TrackingEvent, b: Ad, c: AdBreak) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime, prft = false) {
+    iterateTrackingEvents(handler: (a: TrackingEvent, b: Ad, c: AdBreak) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
         this.adPods.forEach((pod) => {
-            const podStartTime = (prft ? pod.prftStartTime : pod.startTime) || 0;
+            const podStartTime = pod.startTime;
             if (podStartTime <= time1 && time0 <= podStartTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                 pod.ads.forEach((ad) => {
-                    const adStartTime = (prft ? ad.prftStartTime : ad.startTime) || 0;
+                    const adStartTime = ad.startTime;
                     if (adStartTime <= time1 && time0 <= adStartTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                         ad.trackingEvents.forEach((trackingUrl) => {
                             handler(trackingUrl, ad, pod);
@@ -198,16 +212,14 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         this.notifyListeners();
 
         try {
-            let i = 0;
-            for (const url of trackingUrl.signalingUrls) {
+            await Promise.all(trackingUrl.signalingUrls.map(async url => {
                 const response = await fetch(url);
-                if (response.status >= 200 && response.status <= 299) {
-                    i++;
-                } else {
+                if (response.status < 200 && response.status > 299) {
                     console.error(`Failed to send beacon to ${url}; Status ${response.status}`);
+                    throw new Error(`Failed to send beacon to ${url}; Status ${response.status}`);
                 }
-            }
-            trackingUrl.reportingState = i === trackingUrl.signalingUrls.length ? "DONE" : "ERROR";
+            }))
+            trackingUrl.reportingState = "DONE"
         } catch (err) {
             trackingUrl.reportingState = "ERROR";
         }

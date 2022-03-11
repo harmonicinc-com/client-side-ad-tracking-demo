@@ -26,24 +26,31 @@ function PlayerContainer() {
     const localSessionRef = useRef<any>();
 
     const [rawCurrentTime, setRawCurrentTime] = useState(0);
-
     const [playhead, setPlayhead] = useState(0);
+    const [prftWallClock, setPrftWallClock] = useState(0);
+    const [streamFormat, setStreamFormat] = useState<string | null>(null);
 
     const updateTime = (time: number) => {
         setRawCurrentTime(time);
 
         if (sessionInfo.manifestUrl?.includes(".m3u8")) {
             const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
-            adTrackingContext.updateRawPlayheadTime(clockTime);
             adTrackingContext.updatePlayheadTime(clockTime);
+            adTrackingContext.needSendBeacon(clockTime);
             setPlayhead(clockTime);
+            setStreamFormat('HLS');
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
             const prftClockTime = shakaRef.current?.getPresentationLatencyInfo()?.wallClock.getTime() || 0;
-            const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
-            adTrackingContext.updateRawPlayheadTime(time * 1000);
-            adTrackingContext.updatePlayheadTime(clockTime);
+            const rawClockTime = time * 1000;
+            const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
+            const clockTime = rawClockTime + presentationStartTime;
             adTrackingContext.updatePrftPlayheadTime(prftClockTime);
+            adTrackingContext.updatePlayheadTime(rawClockTime);
+            adTrackingContext.updatePresentationStartTime(presentationStartTime);
+            adTrackingContext.needSendBeacon(prftClockTime > 0 ? prftClockTime : rawClockTime);
+            setPrftWallClock(prftClockTime);
             setPlayhead(clockTime);
+            setStreamFormat('DASH');
         }
     };
 
@@ -51,8 +58,20 @@ function PlayerContainer() {
       console.error("Error from player", error);
     }
 
-    const timeToNextBreak = Math.min(Infinity,
-        ...adTrackingContext.adPods.filter(p => p.startTime > playhead).map(p => p.startTime)) - playhead;
+    const timeMsToNextBreak = () => {
+        let wallClock = 0;
+        if (streamFormat === 'HLS') {
+            wallClock = playhead;
+        } else if (streamFormat === 'DASH') {
+            wallClock = prftWallClock || (rawCurrentTime * 1000);
+        } else {
+            return Infinity;
+        }
+        return Math.min(Infinity, ...adTrackingContext.adPods
+            .filter(p => p.startTime > wallClock)
+            .map(p => p.startTime))
+            - wallClock;
+    }
 
     useInterval(() => {
         const time = shakaRef.current?.getRawVideoTime();
@@ -97,7 +116,10 @@ function PlayerContainer() {
                 Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}
             </div>
             <div>
-                Time to next ad break: {timeToNextBreak !== Infinity ? Math.ceil(timeToNextBreak/1000).toFixed(0) + 's' : '-'}
+                PRFT Wall Clock: {prftWallClock ? new Date(prftWallClock).toLocaleString() : '-'}
+            </div>
+            <div>
+                Time to next ad break: {timeMsToNextBreak() !== Infinity ? Math.ceil(timeMsToNextBreak() /1000).toFixed(0) + 's' : '-'}
             </div>
         </div>
     );

@@ -3,6 +3,7 @@ export interface TrackingEvent {
     event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete"
     // time to fire beacon,
     startTime: number
+    duration: number
     prftStartTime?: number
     // beacon url list
     signalingUrls: string[]

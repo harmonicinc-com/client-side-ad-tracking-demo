@@ -68,6 +68,8 @@ function AdPodList() {
 
   const playheadInMs = adTrackingContext.lastPlayheadTime;
 
+  const presentationStartTime = adTrackingContext.presentationStartTime;
+
   const shouldExpandPod = (pod: AdBreak): boolean => {
     const keepPastPodFor = 2000;
     if (pod.id in expandPods) {
@@ -108,6 +110,8 @@ function AdPodList() {
     setExpandAds(newState);
   };
 
+  const getPlayhead = (rawTime: number) => rawTime + presentationStartTime;
+
   return (
     <div className="ad-pod-list">
       {pods ?
@@ -123,7 +127,7 @@ function AdPodList() {
                     Ad Pod: {pod.id}
                   </div>
                   <div>
-                    Time: {new Date(pod.startTime).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
+                    Time: {new Date(getPlayhead(pod.startTime)).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
                   </div>
                 </ListItemText>
                 {shouldExpandPod(pod) ? <ExpandLess /> : <ExpandMore />}
@@ -141,7 +145,7 @@ function AdPodList() {
                             Ad: {ad.id}
                           </div>
                           <div>
-                            Time: {new Date(ad.startTime).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
+                            Time: {new Date(getPlayhead(ad.startTime)).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
                           </div>
                         </ListItemText>
                         {shouldExpandAd(ad, pod) ? <ExpandLess /> : <ExpandMore />}
@@ -166,7 +170,7 @@ function AdPodList() {
                                   </div>
                                   {trackingUrl.startTime ?
                                     <div>
-                                      Time: {new Date(trackingUrl.startTime).toLocaleString()}
+                                      Time: {new Date(getPlayhead(trackingUrl.startTime)).toLocaleString()}
                                     </div>
                                     : null}
                                 </ListItemText>
