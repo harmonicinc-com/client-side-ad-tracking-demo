@@ -11,7 +11,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import AdTrackingContext from './AdTrackingContext';
 import {theme} from "./App";
-import {Ad, AdBreak} from "../types/AdBeacon";
+import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
 
 const useStyles = makeStyles(() => ({
   itemText: {
@@ -68,6 +68,8 @@ function AdPodList() {
 
   const playheadInMs = adTrackingContext.lastPlayheadTime;
 
+  const prftPlayheadInMs = adTrackingContext.lastPrftPlayheadTime;
+
   const presentationStartTime = adTrackingContext.presentationStartTime;
 
   const shouldExpandPod = (pod: AdBreak): boolean => {
@@ -75,7 +77,8 @@ function AdPodList() {
     if (pod.id in expandPods) {
       return expandPods[pod.id];
     } else {
-      return playheadInMs !== null && playheadInMs < pod.startTime + pod.duration + keepPastPodFor;
+      const playhead = pod.prftStartTime ? prftPlayheadInMs : playheadInMs;
+      return playhead !== null && playhead < pod.startTime + pod.duration + keepPastPodFor;
     }
   }
 
@@ -95,7 +98,8 @@ function AdPodList() {
     if (pod.id + '/' + ad.id in expandAds) {
       return expandAds[pod.id + '/' + ad.id];
     } else {
-      return playheadInMs !== null && playheadInMs < ad.startTime + ad.duration + keepPastAdFor;
+      const playhead = pod.prftStartTime ? prftPlayheadInMs : playheadInMs;
+      return playhead !== null && playhead < ad.startTime + ad.duration + keepPastAdFor;
     }
   }
 
@@ -110,7 +114,14 @@ function AdPodList() {
     setExpandAds(newState);
   };
 
-  const getPlayhead = (rawTime: number) => rawTime + presentationStartTime;
+  const getTime = (o: AdBreak | Ad | TrackingEvent) => {
+    return new Date(o.prftStartTime ? o.prftStartTime : o.startTime + presentationStartTime).toLocaleString();
+  }
+  const getClass = (o: AdBreak | Ad | TrackingEvent) => {
+    const playhead = o.prftStartTime ? prftPlayheadInMs : playheadInMs;
+    const startTime = o.prftStartTime || o.startTime;
+    return startTime < playhead && playhead < startTime + o.duration ? classes.podItemOnAir : classes.podItem
+  }
 
   return (
     <div className="ad-pod-list">
@@ -118,7 +129,7 @@ function AdPodList() {
         <List>
           {pods.map((pod) =>
             <div key={pod.id}>
-              <ListItem button onClick={() => toggleExpandPod(pod)} className={pod.startTime < playheadInMs && playheadInMs < pod.startTime + pod.duration ? classes.podItemOnAir : classes.podItem}>
+              <ListItem button onClick={() => toggleExpandPod(pod)} className={getClass(pod)}>
                 <ListItemIcon>
                   <FolderIcon />
                 </ListItemIcon>
@@ -127,7 +138,7 @@ function AdPodList() {
                     Ad Pod: {pod.id}
                   </div>
                   <div>
-                    Time: {new Date(getPlayhead(pod.startTime)).toLocaleString()}, Duration: {(pod.duration / 1000).toFixed(1)}s
+                    Time: {getTime(pod)}, Duration: {(pod.duration / 1000).toFixed(1)}s
                   </div>
                 </ListItemText>
                 {shouldExpandPod(pod) ? <ExpandLess /> : <ExpandMore />}
@@ -136,7 +147,7 @@ function AdPodList() {
                 <List>
                   {pod.ads.map((ad) =>
                     <div key={ad.id}>
-                      <ListItem button onClick={() => toggleExpandAd(ad, pod)} className={ad.startTime < playheadInMs && playheadInMs < ad.startTime + ad.duration ? classes.adItemOnAir : classes.adItem}>
+                      <ListItem button onClick={() => toggleExpandAd(ad, pod)} className={getClass(ad)}>
                         <ListItemIcon>
                           <MovieIcon />
                         </ListItemIcon>
@@ -145,7 +156,7 @@ function AdPodList() {
                             Ad: {ad.id}
                           </div>
                           <div>
-                            Time: {new Date(getPlayhead(ad.startTime)).toLocaleString()}, Duration: {(ad.duration / 1000).toFixed(1)}s
+                            Time: {getTime(ad)}, Duration: {(ad.duration / 1000).toFixed(1)}s
                           </div>
                         </ListItemText>
                         {shouldExpandAd(ad, pod) ? <ExpandLess /> : <ExpandMore />}
@@ -170,7 +181,7 @@ function AdPodList() {
                                   </div>
                                   {trackingUrl.startTime ?
                                     <div>
-                                      Time: {new Date(getPlayhead(trackingUrl.startTime)).toLocaleString()}
+                                      Time: {getTime(trackingUrl)}
                                     </div>
                                     : null}
                                 </ListItemText>

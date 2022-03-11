@@ -192,6 +192,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const adTrackingContext: SimpleAdTrackerInterface = {
         adPods: adPods,
         lastPlayheadTime,
+        lastPrftPlayheadTime,
         presentationStartTime,
         updatePlayheadTime: (time) => {
             setLastPlayheadTime(time);
