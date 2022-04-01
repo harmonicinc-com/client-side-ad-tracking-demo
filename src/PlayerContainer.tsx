@@ -41,7 +41,7 @@ function PlayerContainer() {
             setStreamFormat('HLS');
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
             const prftClockTime = shakaRef.current?.getPresentationLatencyInfo()?.wallClock.getTime() || 0;
-            const rawClockTime = time * 1000;
+            const rawClockTime = Math.round(time * 1000);
             const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
             const clockTime = rawClockTime + presentationStartTime;
             adTrackingContext.updatePrftPlayheadTime(prftClockTime);
