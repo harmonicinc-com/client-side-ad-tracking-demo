@@ -35,8 +35,6 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
     if (!video || !container) return;
 
     this.player = new shaka.Player(video);
-    this.player.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
-    this.player.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
     this.lastMuted = video.muted;
 
     if (!this.player) return;
@@ -77,6 +75,26 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
     });
   }
 
+  configure(lowLatency: boolean) {
+    if (lowLatency) {
+      this.player?.configure('streaming.lowLatencyMode', true);
+      this.player?.configure('abrFactory', () => new shaka.abr.SimpleLLAbrManager());
+      this.player?.configure('streaming.liveCatchUp.enabled', true);
+      this.player?.configure('streaming.liveCatchUp.targetLiveLatencyOverride', 6000);
+      this.player?.configure('streaming.liveCatchUp.playbackRateMinOverride', 0);
+      this.player?.configure('streaming.liveCatchUp.playbackRateMaxOverride', 0);
+      this.player?.configure('manifest.defaultPresentationDelay', 0);
+    } else {
+      this.player?.configure('streaming.lowLatencyMode', false);
+      this.player?.configure('streaming.liveCatchUp.enabled', false);
+      this.player?.configure('streaming.liveCatchUp.targetLiveLatencyOverride', 0);
+      this.player?.configure('streaming.liveCatchUp.playbackRateMinOverride', 1);
+      this.player?.configure('streaming.liveCatchUp.playbackRateMaxOverride', 1);
+      this.player?.configure('manifest.defaultPresentationDelay', 12.0 /* seconds */);
+      this.player?.configure('manifest.dash.ignoreSuggestedPresentationDelay', true);
+    }
+  }
+
   load(url: string) {
     this.player?.load(url);
     this.paused = false;
@@ -89,6 +107,10 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
 
   getPlayheadTimeAsDate() {
     return this.player?.getPlayheadTimeAsDate() || null;
+  }
+
+  getSeekRange() {
+    return this.player?.seekRange() || null;
   }
 
   getRawVideoTime() {

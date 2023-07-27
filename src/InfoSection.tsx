@@ -1,6 +1,6 @@
-import React, { useContext, useRef, MouseEvent } from 'react';
+import React, { useContext, useRef, MouseEvent, useEffect, useState } from 'react';
 import makeStyles from '@mui/styles/makeStyles';
-import { Box, Button, Link, Snackbar, TextField, Typography } from '@mui/material';
+import { Box, Button, Checkbox, FormControlLabel, Link, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 import { ErrorContext } from './ErrorContext';
 import SessionContext from './SessionContext';
@@ -29,10 +29,12 @@ function InfoSection() {
 
   const urlInputRef = useRef<any>();
 
+  const [lowLatencyChecked, setLowLatencyChecked] = useState(false);
+
   const preventDefault = (event: MouseEvent<HTMLAnchorElement | HTMLSpanElement>) => event.preventDefault();
 
   const load = async () => {
-    await sessionContext.load(urlInputRef.current.value);
+    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked);
   }
 
   const unload = () => {
@@ -42,6 +44,10 @@ function InfoSection() {
   const closeAlert = (errorKey: string) => {
     errorContext.acknowledgeError(errorKey);
   }
+
+  useEffect(() => {
+    setLowLatencyChecked(sessionInfo.lowLatencyMode)
+  }, [sessionInfo])
 
   return (
     <div>
@@ -59,6 +65,12 @@ function InfoSection() {
         Harmonic Client Side Ad Tracking Demo
       </Typography>
       <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={sessionInfo.mediaUrl || ''} variant={'standard'} />
+      <Stack direction="row">
+        <FormControlLabel
+          control={<Checkbox checked={lowLatencyChecked} onChange={(e) => setLowLatencyChecked(e.target.checked)} />}
+          label="Low latency"
+        />
+      </Stack>
       <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">
         <Button variant="contained" color="primary" onClick={load}>
           Load

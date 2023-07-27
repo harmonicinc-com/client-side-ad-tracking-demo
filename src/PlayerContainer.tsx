@@ -5,6 +5,7 @@ import AdTrackingContext from './AdTrackingContext';
 import useInterval from './useInterval';
 import SessionContextInterface from "../types/SessionContextInterface";
 import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
+import { DataRange } from '../types/AdBeacon';
 
 function PlayerContainer() {
     const sessionContext = useContext<SessionContextInterface | undefined>(SessionContext);
@@ -28,6 +29,8 @@ function PlayerContainer() {
     const [rawCurrentTime, setRawCurrentTime] = useState(0);
     const [playhead, setPlayhead] = useState(0);
     const [prftWallClock, setPrftWallClock] = useState(0);
+    const [latency, setLatency] = useState(NaN);
+    const [metadataTimeRange, setMetadataTimeRange] = useState<DataRange | null>(null);
     const [streamFormat, setStreamFormat] = useState<string | null>(null);
 
     const updateTime = (time: number) => {
@@ -37,10 +40,14 @@ function PlayerContainer() {
             const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
             adTrackingContext.updatePlayheadTime(clockTime);
             adTrackingContext.needSendBeacon(clockTime);
+            adTrackingContext.updateLiveEdge(shakaRef.current?.getSeekRange()?.end * 1000 || 0)
             setPlayhead(clockTime);
             setStreamFormat('HLS');
+            setMetadataTimeRange(adTrackingContext.metadataTimeRange);
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
-            const prftClockTime = shakaRef.current?.getPresentationLatencyInfo()?.wallClock.getTime() || 0;
+            const prftInfo = shakaRef.current?.getPresentationLatencyInfo()
+            const prftClockTime = prftInfo?.wallClock.getTime() || 0;
+            const latency = prftInfo?.latency || NaN;
             const rawClockTime = Math.round(time * 1000);
             const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
             const clockTime = rawClockTime + presentationStartTime;
@@ -48,9 +55,12 @@ function PlayerContainer() {
             adTrackingContext.updatePlayheadTime(rawClockTime);
             adTrackingContext.updatePresentationStartTime(presentationStartTime);
             adTrackingContext.needSendBeacon(prftClockTime > 0 ? prftClockTime : rawClockTime);
+            adTrackingContext.updateLiveEdge((shakaRef.current?.getSeekRange()?.end ?? 0) * 1000)
             setPrftWallClock(prftClockTime);
             setPlayhead(clockTime);
             setStreamFormat('DASH');
+            setLatency(latency);
+            setMetadataTimeRange(adTrackingContext.metadataTimeRange);
         }
     };
 
@@ -81,6 +91,7 @@ function PlayerContainer() {
     useEffect(() => {
         if (shakaRef.current && localSessionRef.current !== sessionInfo.localSessionId) {
             if (sessionInfo.manifestUrl) {
+                shakaRef.current.configure(sessionInfo.lowLatencyMode)
                 shakaRef.current.load(sessionInfo.manifestUrl);
             } else {
                 shakaRef.current.unload();
@@ -110,13 +121,19 @@ function PlayerContainer() {
                 }}
                 onError={onError}/>
             <div>
-                Raw currentTime from video element: {rawCurrentTime ? rawCurrentTime.toFixed(0) : 0}s
+                Raw currentTime from video element: {rawCurrentTime ? rawCurrentTime.toFixed(1) : 0}s
             </div>
             <div>
                 Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}
             </div>
             <div>
                 PRFT Wall Clock: {prftWallClock ? new Date(prftWallClock).toLocaleString() : '-'}
+            </div>
+            <div>
+                Latency: {!Number.isNaN(latency) ? latency + 's' : '-'}
+            </div>
+            <div>
+                Ad metadata coverage: {metadataTimeRange ? (metadataTimeRange.end/1000 - rawCurrentTime).toFixed(1) + 's beyond playhead' : '-'}
             </div>
             <div>
                 Time to next ad break: {timeMsToNextBreak() !== Infinity ? Math.ceil(timeMsToNextBreak() /1000).toFixed(0) + 's' : '-'}
