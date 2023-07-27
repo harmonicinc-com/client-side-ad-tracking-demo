@@ -1,5 +1,5 @@
 import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
-import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
+import {Ad, AdBreak, DataRange, TrackingEvent} from "../types/AdBeacon";
 
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
 const MAX_TOLERANCE_IN_SPEED = 2;
@@ -82,6 +82,8 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
     lastPlayheadTime: number;
     lastPrftPlayheadTime: number;
     presentationStartTime: number;
+    metadataTimeRange: DataRange;
+    liveEdge: number;
 
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
@@ -93,6 +95,11 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         this.lastPrftPlayheadTime = 0;
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
+        this.metadataTimeRange = {
+            start: 0,
+            end: 0,
+        }
+        this.liveEdge = 0
     }
 
     addUpdateListener(listener: () => void) {
@@ -151,6 +158,10 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
 
     updatePresentationStartTime(time: number): void {
         this.presentationStartTime = time;
+    }
+
+    updateLiveEdge(liveEdge: number): void {
+        this.liveEdge = liveEdge
     }
 
     getAdPods() {
