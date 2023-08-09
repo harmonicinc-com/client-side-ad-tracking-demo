@@ -35,7 +35,6 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         adTrackingMetadataUrl: "",
     });
     const [lastPlayheadTime, setLastPlayheadTime] = useState(0);
-    const [lastPrftPlayheadTime, setLastPrftPlayheadTime] = useState(0);
     const [adPods, setAdPods] = useState<any>([]);
     const [lastDataRange, setLastDataRange] = useState<DataRange | null>(null);
     const [liveEdge, setLiveEdge] = useState(0);
