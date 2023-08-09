@@ -1,5 +1,4 @@
-import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
-import {Ad, AdBreak, DataRange, TrackingEvent} from "../types/AdBeacon";
+import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
 
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
 const MAX_TOLERANCE_IN_SPEED = 2;
@@ -77,29 +76,17 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
     return updated;
 }
 
-export default class SimpleAdTracker implements SimpleAdTrackerInterface {
-    adPods: AdBreak[];
-    lastPlayheadTime: number;
-    lastPrftPlayheadTime: number;
-    presentationStartTime: number;
-    metadataTimeRange: DataRange;
-    liveEdge: number;
-
+export default class SimpleAdTracker {
+    private adPods: AdBreak[];
+    private lastPlayheadTime: number;
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
 
     constructor() {
         this.adPods = [];
         this.lastPlayheadTime = 0;
-        this.presentationStartTime = 0;
-        this.lastPrftPlayheadTime = 0;
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
-        this.metadataTimeRange = {
-            start: 0,
-            end: 0,
-        }
-        this.liveEdge = 0
     }
 
     addUpdateListener(listener: () => void) {
@@ -120,7 +107,7 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         }
     }
 
-    needSendBeacon(time: number) {
+    updatePlayheadTime(time: number) {
         const now = new Date().getTime();
         if (this.lastPlayheadUpdateTime) {
             if (now === this.lastPlayheadUpdateTime) {
@@ -144,27 +131,7 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         this.lastPlayheadUpdateTime = now;
     }
 
-    updatePlayheadTime(time: number) {
-        this.needSendBeacon(time);
-    }
-
-    updatePrftPlayheadTime(time: number): void {
-        this.needSendBeacon(time);
-    }
-
-    updateRawPlayheadTime(time: number): void {
-        this.needSendBeacon(time);
-    }
-
-    updatePresentationStartTime(time: number): void {
-        this.presentationStartTime = time;
-    }
-
-    updateLiveEdge(liveEdge: number): void {
-        this.liveEdge = liveEdge
-    }
-
-    getAdPods() {
+    getAdPods(): AdBreak[] {
         return this.adPods;
     }
 
@@ -202,13 +169,13 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
 
     // private
 
-    notifyListeners() {
+    private notifyListeners() {
         this.listeners.forEach((listener) => {
             listener();
         });
     };
 
-    iterateTrackingEvents(handler: (a: TrackingEvent, b: Ad, c: AdBreak) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
+    private iterateTrackingEvents(handler: (a: TrackingEvent, b: Ad, c: AdBreak) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
         this.adPods.forEach((pod) => {
             const podStartTime = pod.startTime;
             if (podStartTime <= time1 && time0 <= podStartTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
@@ -224,7 +191,7 @@ export default class SimpleAdTracker implements SimpleAdTrackerInterface {
         });
     }
 
-    async sendBeacon(trackingUrl: TrackingEvent) {
+    private async sendBeacon(trackingUrl: TrackingEvent) {
         trackingUrl.reportingState = "REPORTING";
         this.notifyListeners();
 

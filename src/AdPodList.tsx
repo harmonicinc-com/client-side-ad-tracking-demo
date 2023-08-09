@@ -68,8 +68,6 @@ function AdPodList() {
 
   const playheadInMs = adTrackingContext.lastPlayheadTime;
 
-  const prftPlayheadInMs = adTrackingContext.lastPrftPlayheadTime;
-
   const presentationStartTime = adTrackingContext.presentationStartTime;
 
   const shouldExpandPod = (pod: AdBreak): boolean => {
@@ -77,8 +75,7 @@ function AdPodList() {
     if (pod.id in expandPods) {
       return expandPods[pod.id];
     } else {
-      const playhead = pod.prftStartTime ? prftPlayheadInMs : playheadInMs;
-      return playhead !== null && playhead < pod.startTime + pod.duration + keepPastPodFor;
+      return playheadInMs !== null && playheadInMs < pod.startTime + pod.duration + keepPastPodFor;
     }
   }
 
@@ -98,8 +95,7 @@ function AdPodList() {
     if (pod.id + '/' + ad.id in expandAds) {
       return expandAds[pod.id + '/' + ad.id];
     } else {
-      const playhead = pod.prftStartTime ? prftPlayheadInMs : playheadInMs;
-      return playhead !== null && playhead < ad.startTime + ad.duration + keepPastAdFor;
+      return playheadInMs !== null && playheadInMs < ad.startTime + ad.duration + keepPastAdFor;
     }
   }
 
@@ -118,9 +114,8 @@ function AdPodList() {
     return new Date(o.prftStartTime ? o.prftStartTime : o.startTime + presentationStartTime).toLocaleString();
   }
   const getClass = (o: AdBreak | Ad | TrackingEvent) => {
-    const playhead = o.prftStartTime ? prftPlayheadInMs : playheadInMs;
     const startTime = o.prftStartTime || o.startTime;
-    return startTime < playhead && playhead < startTime + o.duration ? classes.podItemOnAir : classes.podItem
+    return startTime < playheadInMs && playheadInMs < startTime + o.duration ? classes.podItemOnAir : classes.podItem
   }
 
   return (

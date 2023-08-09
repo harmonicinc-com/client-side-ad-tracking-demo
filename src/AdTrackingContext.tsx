@@ -1,6 +1,6 @@
 import React from 'react';
-import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
+import AdTrackingContextInterface from '../types/AdTrackingContextInterface';
 
-const AdTrackingContext = React.createContext<SimpleAdTrackerInterface | undefined>(undefined);
+const AdTrackingContext = React.createContext<AdTrackingContextInterface | undefined>(undefined);
 
 export default AdTrackingContext;
