@@ -144,10 +144,10 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
         let useLiveMetadata = lastPlayheadTime > liveEdge - LIVE_METADATA_TIMESPAN_MS
         if (useLiveMetadata) {
-            if (lastPlayheadTime + MIN_METADATA_LOOK_AHEAD_MS > lastDataRange.end) {
+            if (!lastDataRange.end || lastPlayheadTime + MIN_METADATA_LOOK_AHEAD_MS > lastDataRange.end) {
                 refreshMetadata(sessionInfo.adTrackingMetadataUrl);
             }
-        } else if (lastPlayheadTime < lastDataRange.start || lastPlayheadTime > lastDataRange.end) {            
+        } else if (!lastDataRange.end || lastPlayheadTime < lastDataRange.start || lastPlayheadTime > lastDataRange.end) {            
             const url = new URL(sessionInfo.adTrackingMetadataUrl);
             url.searchParams.append('start', lastPlayheadTime.toFixed(0));
             refreshMetadata(url.toString());

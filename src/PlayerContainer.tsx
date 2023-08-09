@@ -28,6 +28,7 @@ function PlayerContainer() {
 
     const [rawCurrentTime, setRawCurrentTime] = useState(0);
     const [playhead, setPlayhead] = useState(0);
+    const [playheadInWallClock, setPlayheadInWallClock] = useState(0);
     const [prftWallClock, setPrftWallClock] = useState(0);
     const [latency, setLatency] = useState(NaN);
     const [metadataTimeRange, setMetadataTimeRange] = useState<DataRange | null>(null);
@@ -38,10 +39,12 @@ function PlayerContainer() {
 
         if (sessionInfo.manifestUrl?.includes(".m3u8")) {
             const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
+            const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
             adTrackingContext.updatePlayheadTime(clockTime);
             adTrackingContext.needSendBeacon(clockTime);
-            adTrackingContext.updateLiveEdge(shakaRef.current?.getSeekRange()?.end * 1000 || 0)
+            adTrackingContext.updateLiveEdge(presentationStartTime + shakaRef.current?.getSeekRange()?.end * 1000 || 0)
             setPlayhead(clockTime);
+            setPlayheadInWallClock(clockTime);
             setStreamFormat('HLS');
             setMetadataTimeRange(adTrackingContext.metadataTimeRange);
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {
@@ -57,7 +60,8 @@ function PlayerContainer() {
             adTrackingContext.needSendBeacon(prftClockTime > 0 ? prftClockTime : rawClockTime);
             adTrackingContext.updateLiveEdge((shakaRef.current?.getSeekRange()?.end ?? 0) * 1000)
             setPrftWallClock(prftClockTime);
-            setPlayhead(clockTime);
+            setPlayhead(rawClockTime);
+            setPlayheadInWallClock(clockTime);
             setStreamFormat('DASH');
             setLatency(latency);
             setMetadataTimeRange(adTrackingContext.metadataTimeRange);
@@ -71,7 +75,7 @@ function PlayerContainer() {
     const timeMsToNextBreak = () => {
         let wallClock = 0;
         if (streamFormat === 'HLS') {
-            wallClock = playhead;
+            wallClock = playheadInWallClock;
         } else if (streamFormat === 'DASH') {
             wallClock = prftWallClock || (rawCurrentTime * 1000);
         } else {
@@ -124,7 +128,7 @@ function PlayerContainer() {
                 Raw currentTime from video element: {rawCurrentTime ? rawCurrentTime.toFixed(1) : 0}s
             </div>
             <div>
-                Playhead date time: {playhead ? new Date(playhead).toLocaleString() : '-'}
+                Playhead date time: {playheadInWallClock ? new Date(playheadInWallClock).toLocaleString() : '-'}
             </div>
             <div>
                 PRFT Wall Clock: {prftWallClock ? new Date(prftWallClock).toLocaleString() : '-'}
@@ -133,7 +137,7 @@ function PlayerContainer() {
                 Latency: {!Number.isNaN(latency) ? latency + 's' : '-'}
             </div>
             <div>
-                Ad metadata coverage: {metadataTimeRange ? (metadataTimeRange.end/1000 - rawCurrentTime).toFixed(1) + 's beyond playhead' : '-'}
+                Ad metadata coverage: {metadataTimeRange ? ((metadataTimeRange.end - playhead) / 1000).toFixed(1) + 's beyond playhead' : '-'}
             </div>
             <div>
                 Time to next ad break: {timeMsToNextBreak() !== Infinity ? Math.ceil(timeMsToNextBreak() /1000).toFixed(0) + 's' : '-'}
