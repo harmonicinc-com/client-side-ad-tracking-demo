@@ -5,7 +5,6 @@ import { ErrorContext } from './ErrorContext';
 import AdTrackingContext from './AdTrackingContext';
 import SessionContext from './SessionContext';
 import SimpleAdTracker from './SimpleAdTracker';
-import SimpleAdTrackerInterface from "../types/SimpleAdTrackerInterface";
 import SessionContextInterface from "../types/SessionContextInterface";
 import AdBeacon, {DataRange} from "../types/AdBeacon";
 import ErrorContextInterface from "../types/ErrorContextInterface";
@@ -144,10 +143,10 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
         let useLiveMetadata = lastPlayheadTime > liveEdge - LIVE_METADATA_TIMESPAN_MS
         if (useLiveMetadata) {
-            if (lastPlayheadTime + MIN_METADATA_LOOK_AHEAD_MS > lastDataRange.end) {
+            if (!lastDataRange.end || lastPlayheadTime + MIN_METADATA_LOOK_AHEAD_MS > lastDataRange.end) {
                 refreshMetadata(sessionInfo.adTrackingMetadataUrl);
             }
-        } else if (lastPlayheadTime < lastDataRange.start || lastPlayheadTime > lastDataRange.end) {            
+        } else if (!lastDataRange.end || lastPlayheadTime < lastDataRange.start || lastPlayheadTime > lastDataRange.end) {            
             const url = new URL(sessionInfo.adTrackingMetadataUrl);
             url.searchParams.append('start', lastPlayheadTime.toFixed(0));
             refreshMetadata(url.toString());
@@ -164,25 +163,18 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         unload: unload
     };
 
-    const adTrackingContext: SimpleAdTrackerInterface = {
+    const adTrackingContext = {
         adPods: adPods,
         lastPlayheadTime,
-        lastPrftPlayheadTime,
         presentationStartTime,
         metadataTimeRange: lastDataRange,
-        updatePlayheadTime: (time) => {
+        updatePlayheadTime: (time: number) => {
             setLastPlayheadTime(time);
+            adTrackerRef.current?.updatePlayheadTime(time);
         },
-        updatePrftPlayheadTime: (time) => {
-            setLastPrftPlayheadTime(time);
-        },
-        updatePresentationStartTime: (time) => {
-            setPresentationStartTime(time);
-        },
-        updateLiveEdge: (liveEdge) => {
+        updateLiveEdge: (liveEdge: number) => {
             setLiveEdge(liveEdge);
         },
-        needSendBeacon: (time) => adTrackerRef.current?.needSendBeacon(time),
         pause: () => adTrackerRef.current?.pause(),
         resume: () => adTrackerRef.current?.resume(),
         mute: () => adTrackerRef.current?.mute(),
