@@ -22,7 +22,7 @@ const mergePods = (existingPods: AdBreak[], pods: AdBreak[]) => {
             existingPod = {
                 id: pod.id,
                 prftStartTime: pod.prftStartTime, // add for display purposes
-                startTime: pod.prftStartTime || pod.startTime,
+                startTime: pod.startTime,
                 duration: pod.duration,
                 ads: []
             };
@@ -54,12 +54,12 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
             existingAd = {
                 id: ad.id,
                 prftStartTime: ad.prftStartTime, // add for display purposes
-                startTime: ad.prftStartTime || ad.startTime,
+                startTime: ad.startTime,
                 duration: ad.duration,
                 trackingEvents: ad.trackingEvents.map(t => ({
                     event: t.event,
                     prftStartTime: t.prftStartTime, // add for display purposes
-                    startTime: t.prftStartTime || t.startTime,
+                    startTime: t.startTime,
                     duration: t.duration,
                     signalingUrls: t.signalingUrls,
                     reportingState: "IDLE"

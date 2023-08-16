@@ -111,10 +111,10 @@ function AdPodList() {
   };
 
   const getTime = (o: AdBreak | Ad | TrackingEvent) => {
-    return new Date(o.prftStartTime ? o.prftStartTime : o.startTime + presentationStartTime).toLocaleString();
+    return new Date(o.startTime + presentationStartTime).toLocaleString();
   }
   const getClass = (o: AdBreak | Ad | TrackingEvent) => {
-    const startTime = o.prftStartTime || o.startTime;
+    const startTime = o.startTime;
     return startTime < playheadInMs && playheadInMs < startTime + o.duration ? classes.podItemOnAir : classes.podItem
   }
 
