@@ -76,6 +76,7 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
   }
 
   configure(lowLatency: boolean) {
+    this.player?.configure('manifest.dash.autoCorrectDrift', false);
     if (lowLatency) {
       this.player?.configure('streaming.lowLatencyMode', true);
       this.player?.configure('abrFactory', () => new shaka.abr.SimpleLLAbrManager());

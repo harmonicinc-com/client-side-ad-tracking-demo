@@ -56,6 +56,7 @@ function PlayerContainer() {
             setLatency(latency);
             setMetadataTimeRange(adTrackingContext.metadataTimeRange);
             adTrackingContext.updatePlayheadTime(mediaTime);
+            adTrackingContext.updatePresentationStartTime(presentationStartTime);
             adTrackingContext.updateLiveEdge((shakaRef.current?.getSeekRange()?.end ?? 0) * 1000)
         }
     };

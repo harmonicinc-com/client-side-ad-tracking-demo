@@ -5,6 +5,7 @@ export default interface AdTrackingContextInterface {
     lastPlayheadTime: number
     presentationStartTime: number
     metadataTimeRange: DataRange | null
+    updatePresentationStartTime: (time: number) => void
     updatePlayheadTime: (time: number) => void
     updateLiveEdge: (liveEdge: number) => void
     pause: () => void

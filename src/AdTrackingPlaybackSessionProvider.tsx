@@ -167,6 +167,9 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         lastPlayheadTime,
         presentationStartTime,
         metadataTimeRange: lastDataRange,
+        updatePresentationStartTime: (time: number) => {
+            setPresentationStartTime(time);
+        },
         updatePlayheadTime: (time: number) => {
             setLastPlayheadTime(time);
             adTrackerRef.current?.updatePlayheadTime(time);
