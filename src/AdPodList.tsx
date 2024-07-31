@@ -118,6 +118,17 @@ function AdPodList() {
     return startTime < playheadInMs && playheadInMs < startTime + o.duration ? classes.podItemOnAir : classes.podItem
   }
 
+  const mergeTrackingEvents = (ad: Ad) => {
+    // merge ad tracking events with companion ad tracking events
+    if (ad.companionAds) {
+      const merged = [...ad.trackingEvents, ...ad.companionAds.map(c => c.companion.map(d => d.trackingEvents).flat()).flat()];
+      merged.sort((a, b) => a.startTime - b.startTime);
+      return merged;
+    } else {
+      return ad.trackingEvents;
+    }
+  }
+
   return (
     <div className="ad-pod-list">
       {pods ?
@@ -159,7 +170,7 @@ function AdPodList() {
                       <Collapse key={ad.id + ".trackingUrls"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
                           {ad.trackingEvents ?
-                            ad.trackingEvents.map((trackingUrl,index) =>
+                            mergeTrackingEvents(ad).map((trackingUrl,index) =>
                               <ListItem key={index} className={classes.trackingUrlItem}>
                                 <ListItemIcon>
                                   {trackingUrl.reportingState === "IDLE" ? <RadioButtonUncheckedIcon /> : null}

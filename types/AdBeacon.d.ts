@@ -1,3 +1,5 @@
+import { CompanionAds } from "./CompanionAds";
+
 export interface TrackingEvent {
     // event type
     event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete"
@@ -19,6 +21,7 @@ export interface Ad {
     // Inserted duration of the ad
     duration: number
     trackingEvents: TrackingEvent[]
+    companionAds: CompanionAds[]
 }
 
 export interface AdBreak {
