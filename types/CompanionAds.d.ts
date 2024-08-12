@@ -1,5 +1,13 @@
 import { TrackingEvent } from "./AdBeacon";
 
+export interface ICompanionAdContext {
+    companionAdsToBeRendered: { [key: string]: Companion };
+}
+
+export interface CompanionAdProps {
+    adSlotId: string;
+}
+
 export interface CompanionAds {
     attributes: {
         required: "all" | "any" | "none";

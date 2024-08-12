@@ -5,7 +5,7 @@ import AdTrackingContext from './AdTrackingContext';
 import useInterval from './useInterval';
 import SessionContextInterface from "../types/SessionContextInterface";
 import { DataRange } from '../types/AdBeacon';
-import CompanionAd from './CompanionAd';
+import CompanionAd from './components/CompanionAd';
 
 function PlayerContainer() {
     const sessionContext = useContext<SessionContextInterface | undefined>(SessionContext);
@@ -110,7 +110,7 @@ function PlayerContainer() {
                     adTrackingContext.unmute();
                 }}
                 onError={onError}/>
-            <CompanionAd />
+            <CompanionAd adSlotId="0" />
             <div>
                 Raw currentTime from video element: {rawCurrentTime ? rawCurrentTime.toFixed(1) : 0}s
             </div>
