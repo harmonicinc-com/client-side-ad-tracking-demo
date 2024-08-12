@@ -1,9 +1,9 @@
-import { Collapse, List, ListItem, ListItem as ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import { Collapse, Grid, List, ListItem, ListItem as ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
 import makeStyles from "@mui/styles/makeStyles";
 import { useContext, useState } from "react";
-import { Ad, AdBreak, TrackingEvent } from "../types/AdBeacon";
-import AdTrackingContext from "./AdTrackingContext";
-import { theme } from "./App";
+import { Ad, AdBreak, TrackingEvent } from "../../types/AdBeacon";
+import AdTrackingContext from "../AdTrackingContext";
+import { theme } from "../App";
 import FolderIcon from '@mui/icons-material/Folder';
 import { ExpandLess, ExpandMore } from "@mui/icons-material";
 import MovieIcon from '@mui/icons-material/Movie';
@@ -155,40 +155,45 @@ export default function CompanionAdList() {
                       <Collapse key={ad.id + ".companionAds"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
                           {ad.companionAds.length > 0 ?
-                          ad.companionAds.map((companionAd, index) =>
-                            <div key={`${ad.id}-companionAd-${index}`}>
-                              <ListItemButton>
-                                <ListItemText>
-                                  Companion Ad #{index}
-                                </ListItemText>
-                              </ListItemButton>
-                              <Collapse key={`${ad.id}-companion`} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
-                                <List>
-                                  {companionAd.companion.map((companion, index) =>
-                                    <div key={`${ad.id}-companion-${index}`}>
-                                      <ListItem className={classes.companionAdItem}>
-                                        <ListItemIcon>
-                                          <ImageIcon />
-                                        </ListItemIcon>
-                                        <ListItemText disableTypography className={classes.itemText}>
-                                          <div>
-                                            Companion ID: {companion.attributes.id}
-                                          </div>
-                                          <div>
-                                            Slot dimensions: {companion.attributes.width} x {companion.attributes.height}
-                                          </div>
-                                          <div>
-                                            Creative dimensions: {companion.attributes.assetWidth} x {companion.attributes.assetHeight}
-                                          </div>
-                                        </ListItemText>
-                                      </ListItem>
-                                    </div>
-                                  )}
-                                </List>
-                              </Collapse>
-                            </div>
-                          )
-                          : <div style={{padding: '32px 0'}} className={classes.itemText}>
+                            ad.companionAds.map((companionAd, index) =>
+                              <div key={`${ad.id}-companionAd-${index}`}>
+                                <ListItemButton>
+                                  <ListItemText>
+                                    Companion Ad #{index}
+                                  </ListItemText>
+                                </ListItemButton>
+                                <Collapse key={`${ad.id}-companion`} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
+                                  <List>
+                                    {companionAd.companion.map((companion, index) =>
+                                      <div key={`${ad.id}-companion-${index}`}>
+                                        <ListItem className={classes.companionAdItem}>
+                                          <ListItemIcon>
+                                            <ImageIcon />
+                                          </ListItemIcon>
+                                          <ListItemText disableTypography className={classes.itemText}>
+                                            <Grid container justifyContent="space-between">
+                                              <Grid item>
+                                                Companion ID: {companion.attributes.id}
+                                              </Grid>
+                                              <Grid item>
+                                                Ad slot ID: {companion.attributes.adSlotId || 'N/A'}
+                                              </Grid>
+                                            </Grid>
+                                            <div>
+                                              Slot dimensions: {companion.attributes.width} x {companion.attributes.height}
+                                            </div>
+                                            <div>
+                                              Creative dimensions: {companion.attributes.assetWidth} x {companion.attributes.assetHeight}
+                                            </div>
+                                          </ListItemText>
+                                        </ListItem>
+                                      </div>
+                                    )}
+                                  </List>
+                                </Collapse>
+                              </div>
+                            )
+                            : <div style={{ padding: '32px 0' }} className={classes.itemText}>
                               No upcoming companion ads
                             </div>
                           }
@@ -201,9 +206,9 @@ export default function CompanionAdList() {
             </div>
           )}
         </List>
-        : <div style={{padding: '32px 0'}} className={classes.itemText}>
-            No upcoming ads
-          </div>
+        : <div style={{ padding: '32px 0' }} className={classes.itemText}>
+          No upcoming ads
+        </div>
       }
     </div>
   );
