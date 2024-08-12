@@ -91,12 +91,14 @@ export default class SimpleAdTracker {
     private lastPlayheadTime: number;
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
+    private companionAdListener: ((ad: Ad) => void);
 
     constructor() {
         this.adPods = [];
         this.lastPlayheadTime = 0;
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
+        this.companionAdListener = () => {};
     }
 
     addUpdateListener(listener: () => void) {
@@ -108,6 +110,10 @@ export default class SimpleAdTracker {
         if (index !== -1) {
             this.listeners.splice(index, 1);
         }
+    }
+
+    setCompanionAdListener(listener: (ad: Ad) => void) {
+        this.companionAdListener = listener;
     }
 
     updatePods(pods: AdBreak[]) {
@@ -196,14 +202,15 @@ export default class SimpleAdTracker {
                             handler(trackingUrl);
                         });
                         // extract this to a helper function
-                        this.iterateCompanionAds(handler, ad, pod);
+                        this.iterateCompanionAds(handler, ad);
+                        this.companionAdListener(ad);
                     }
                 });
             }
         });
     }
 
-    private iterateCompanionAds(handler: (trackingUrl: TrackingEvent) => void, ad: Ad, pod: AdBreak) {
+    private iterateCompanionAds(handler: (trackingUrl: TrackingEvent) => void, ad: Ad) {
         ad.companionAds.forEach((companionAd) => {
             companionAd.companion.forEach((companion) => {
                 companion.trackingEvents.forEach((trackingUrl) => {

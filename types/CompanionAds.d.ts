@@ -2,7 +2,7 @@ import { TrackingEvent } from "./AdBeacon";
 
 export interface CompanionAds {
     attributes: {
-        required: boolean;
+        required: "all" | "any" | "none";
     };
     companion: Companion[];
 }
