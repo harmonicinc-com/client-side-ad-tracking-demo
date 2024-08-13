@@ -13,6 +13,8 @@ import AdTrackingPlaybackSessionProvider
 import PlayerContainer from './PlayerContainer'
 import InfoSection from './InfoSection'
 import { Route, BrowserRouter } from 'react-router-dom'
+import { useState } from 'react';
+import CompanionAdList from './CompanionAdList';
 
 export const theme = createTheme({
   palette: {
@@ -35,6 +37,11 @@ const useStyles = makeStyles(() => ({
 
 function App () {
   const classes = useStyles()
+  const [tab, setTab] = useState(0)
+
+  const handleTabChange = (_event: React.ChangeEvent<{}>, newValue: number) => {
+    setTab(newValue)
+  }
 
   return (
     <StyledEngineProvider injectFirst>
@@ -58,12 +65,15 @@ function App () {
                     <Grid item xs={12} sm={6}>
                       <Paper square className={classes.paper}>
                         <Tabs
-                          value={0}
+                          value={tab}
+                          onChange={handleTabChange}
                           indicatorColor="primary"
                           textColor="primary">
                           <Tab label="Tracking Events"/>
+                          <Tab label="Companion Ads"/>
                         </Tabs>
-                        <AdPodList/>
+                        {tab === 0 && <AdPodList/>}
+                        {tab === 1 && <CompanionAdList/>}
                       </Paper>
                     </Grid>
                   </Grid>

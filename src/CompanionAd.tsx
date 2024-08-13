@@ -7,12 +7,12 @@ import useInterval from "./useInterval";
 export default function CompanionAd() {
     const adTrackingContext = useContext(AdTrackingContext);
     if (adTrackingContext === undefined) {
-      throw new Error('AdTrackingContext is undefined');
+        throw new Error('AdTrackingContext is undefined');
     }
 
     const pods = adTrackingContext.adPods || [];
     const playheadInMs = adTrackingContext.lastPlayheadTime;
-    const [companionAdsToBeRendered, setCompanionAdsToBeRendered] = useState<{[key: string]: Companion}>({});
+    const [companionAdsToBeRendered, setCompanionAdsToBeRendered] = useState<{ [key: string]: Companion }>({});
 
     const isOnAir = (o: AdBreak | Ad) => {
         const startTime = o.startTime;
@@ -20,7 +20,7 @@ export default function CompanionAd() {
     }
 
     const updateLoop = () => {
-        const newCompanionAdsToBeRendered: {[key: string]: Companion} = {};
+        const newCompanionAdsToBeRendered: { [key: string]: Companion } = {};
         for (const pod of pods) {
             if (isOnAir(pod)) {
                 // determine ad is in progress
@@ -43,23 +43,28 @@ export default function CompanionAd() {
         window.open(ad.companionClickThrough, "_blank");
         // no need to wait for the click tracking to finish
         fetch(ad.companionClickTracking);
-    }   
+    }
+
+    const isFullscreen = () => {
+        return document.fullscreenElement !== null;
+    }
 
     useInterval(updateLoop, 500);
 
     return (
-        <div style={{position: "absolute"}}>
+        <div style={{ position: "absolute" }}>
             {Object.values(companionAdsToBeRendered).map((companionAd) => (
-                <div key={companionAd.attributes.id} style={{ 
+                <div key={companionAd.attributes.id} style={{
                     zIndex: 999,
-                    position: "absolute", 
-                    top: `${companionAd.attributes.height}px`, 
-                    left: `${companionAd.attributes.width}px`, 
-                    width: `${companionAd.attributes.assetWidth}px`, 
-                    height: `${companionAd.attributes.assetHeight}px`}}>
-                        <button onClick={() => onImgClick(companionAd)} style={{ padding: 0, border: 'none', background: 'none' }}>
-                            <img src={companionAd.staticResource} alt={companionAd.altText} />
-                        </button>
+                    position: "absolute",
+                    top: `${companionAd.attributes.height}px`,
+                    left: `${companionAd.attributes.width}px`,
+                    width: `${isFullscreen() ? companionAd.attributes.expandedWidth : companionAd.attributes.assetWidth}px`,
+                    height: `${isFullscreen() ? companionAd.attributes.expandedHeight : companionAd.attributes.assetHeight}px`
+                }}>
+                    <button onClick={() => onImgClick(companionAd)} style={{ padding: 0, border: 'none', background: 'none' }}>
+                        <img src={companionAd.staticResource} alt={companionAd.altText} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                    </button>
                 </div>
             ))}
         </div>
