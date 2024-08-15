@@ -1,6 +1,8 @@
+import { CompanionAds } from "./CompanionAds";
+
 export interface TrackingEvent {
     // event type
-    event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete"
+    event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete" | "createView"
     // time to fire beacon,
     startTime: number
     duration: number
@@ -8,6 +10,7 @@ export interface TrackingEvent {
     // beacon url list
     signalingUrls: string[]
     reportingState?: string;
+    isCompanionAd?: boolean;
 }
 
 export interface Ad {
@@ -19,6 +22,7 @@ export interface Ad {
     // Inserted duration of the ad
     duration: number
     trackingEvents: TrackingEvent[]
+    companionAds: CompanionAds[]
 }
 
 export interface AdBreak {

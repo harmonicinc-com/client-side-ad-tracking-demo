@@ -1,17 +1,13 @@
-import { useContext, useState } from 'react';
-import makeStyles from '@mui/styles/makeStyles';
-import { Collapse, List, ListItem, ListItemText, ListItemIcon, Grid, ListItemButton } from '@mui/material';
-import MovieIcon from '@mui/icons-material/Movie';
+import { Collapse, List, ListItem, ListItem as ListItemButton, ListItemIcon, ListItemText } from "@mui/material";
+import makeStyles from "@mui/styles/makeStyles";
+import { useContext, useState } from "react";
+import { Ad, AdBreak, TrackingEvent } from "../types/AdBeacon";
+import AdTrackingContext from "./AdTrackingContext";
+import { theme } from "./App";
 import FolderIcon from '@mui/icons-material/Folder';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ErrorIcon from '@mui/icons-material/Error';
-import HourglassFullIcon from '@mui/icons-material/HourglassFull';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
-import ExpandLess from '@mui/icons-material/ExpandLess';
-import ExpandMore from '@mui/icons-material/ExpandMore';
-import AdTrackingContext from './AdTrackingContext';
-import {theme} from "./App";
-import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
+import MovieIcon from '@mui/icons-material/Movie';
+import ImageIcon from '@mui/icons-material/Image';
 
 const useStyles = makeStyles(() => ({
   itemText: {
@@ -38,7 +34,7 @@ const useStyles = makeStyles(() => ({
       background: "#64b5f6",
     }
   },
-  trackingUrlItem: {
+  companionAdItem: {
     paddingLeft: theme.spacing(8),
     paddingTop: theme.spacing(0),
     paddingBottom: theme.spacing(1)
@@ -51,7 +47,7 @@ const useStyles = makeStyles(() => ({
   }
 }));
 
-function AdPodList() {
+export default function CompanionAdList() {
   const classes = useStyles();
 
   const adTrackingContext = useContext(AdTrackingContext);
@@ -60,9 +56,9 @@ function AdPodList() {
     throw new Error('AdTrackingContext is undefined');
   }
 
-  const [expandPods, setExpandPods] = useState<{[key: string]: boolean}>({});
+  const [expandPods, setExpandPods] = useState<{ [key: string]: boolean }>({});
 
-  const [expandAds, setExpandAds] = useState<{[key: string]: boolean}>({});
+  const [expandAds, setExpandAds] = useState<{ [key: string]: boolean }>({});
 
   const pods = adTrackingContext.adPods || [];
 
@@ -118,22 +114,6 @@ function AdPodList() {
     return startTime < playheadInMs && playheadInMs < startTime + o.duration ? classes.podItemOnAir : classes.podItem
   }
 
-  const mergeTrackingEvents = (ad: Ad) => {
-    // merge ad tracking events with companion ad tracking events
-    if (ad.companionAds) {
-      const merged = [...ad.trackingEvents, ...ad.companionAds.map(c => c.companion.map(d => d.trackingEvents.map(e => {
-        return {
-          ...e,
-          isCompanionAd: true
-        }
-      })).flat()).flat()];
-      merged.sort((a, b) => a.startTime - b.startTime);
-      return merged;
-    } else {
-      return ad.trackingEvents;
-    }
-  }
-
   return (
     <div className="ad-pod-list">
       {pods.length > 0 ?
@@ -169,39 +149,48 @@ function AdPodList() {
                           <div>
                             Time: {getTime(ad)}, Duration: {(ad.duration / 1000).toFixed(1)}s
                           </div>
-                          { ad.companionAds.length > 0 ? <div>With companion ads</div> : null }
                         </ListItemText>
                         {shouldExpandAd(ad, pod) ? <ExpandLess /> : <ExpandMore />}
                       </ListItemButton>
-                      <Collapse key={ad.id + ".trackingUrls"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
+                      <Collapse key={ad.id + ".companionAds"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
-                          {ad.trackingEvents ?
-                            mergeTrackingEvents(ad).map((trackingUrl,index) =>
-                              <ListItem key={index} className={classes.trackingUrlItem}>
-                                <ListItemIcon>
-                                  {trackingUrl.reportingState === "IDLE" ? <RadioButtonUncheckedIcon /> : null}
-                                  {trackingUrl.reportingState === "REPORTING" ? <HourglassFullIcon /> : null}
-                                  {trackingUrl.reportingState === "DONE" ? <CheckCircleIcon className={classes.greenIcon} /> : null}
-                                  {trackingUrl.reportingState === "ERROR" ? <ErrorIcon className={classes.redIcon} /> : null}
-                                </ListItemIcon>
-                                <ListItemText disableTypography className={classes.itemText}>
-                                  <div>
-                                    <Grid container justifyContent="space-between" direction="row">
-                                      <Grid item>
-                                        Event: {trackingUrl.event}
-                                      </Grid>
-                                      { trackingUrl.isCompanionAd ? <Grid item>Companion Ad</Grid> : null }
-                                    </Grid>
-                                  </div>
-                                  {trackingUrl.startTime ?
-                                    <div>
-                                      Time: {getTime(trackingUrl)}
-                                    </div>
-                                    : null}
+                          {ad.companionAds.length > 0 ?
+                          ad.companionAds.map((companionAd, index) =>
+                            <div key={`${ad.id}-companionAd-${index}`}>
+                              <ListItemButton>
+                                <ListItemText>
+                                  Companion Ad #{index}
                                 </ListItemText>
-                              </ListItem>
-                            )
-                            : null
+                              </ListItemButton>
+                              <Collapse key={`${ad.id}-companion`} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
+                                <List>
+                                  {companionAd.companion.map((companion, index) =>
+                                    <div key={`${ad.id}-companion-${index}`}>
+                                      <ListItem className={classes.companionAdItem}>
+                                        <ListItemIcon>
+                                          <ImageIcon />
+                                        </ListItemIcon>
+                                        <ListItemText disableTypography className={classes.itemText}>
+                                          <div>
+                                            Companion ID: {companion.attributes.id}
+                                          </div>
+                                          <div>
+                                            Slot dimensions: {companion.attributes.width} x {companion.attributes.height}
+                                          </div>
+                                          <div>
+                                            Creative dimensions: {companion.attributes.assetWidth} x {companion.attributes.assetHeight}
+                                          </div>
+                                        </ListItemText>
+                                      </ListItem>
+                                    </div>
+                                  )}
+                                </List>
+                              </Collapse>
+                            </div>
+                          )
+                          : <div style={{padding: '32px 0'}} className={classes.itemText}>
+                              No upcoming companion ads
+                            </div>
                           }
                         </List>
                       </Collapse>
@@ -213,11 +202,9 @@ function AdPodList() {
           )}
         </List>
         : <div style={{padding: '32px 0'}} className={classes.itemText}>
-            No upcoming tracking events
+            No upcoming ads
           </div>
       }
     </div>
   );
 }
-
-export default AdPodList;

@@ -63,6 +63,16 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
                     duration: t.duration,
                     signalingUrls: t.signalingUrls,
                     reportingState: "IDLE"
+                })),
+                companionAds: ad.companionAds.map(c => ({
+                    ...c,
+                    companion: c.companion.map(d => ({
+                        ...d,
+                        trackingEvents: d.trackingEvents.map(e => ({
+                            ...e,
+                            reportingState: "IDLE"
+                        }))
+                    }))
                 }))
             };
             existingAds.push(existingAd);
@@ -81,12 +91,14 @@ export default class SimpleAdTracker {
     private lastPlayheadTime: number;
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
+    private companionAdListener: ((ad: Ad) => void);
 
     constructor() {
         this.adPods = [];
         this.lastPlayheadTime = 0;
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
+        this.companionAdListener = () => {};
     }
 
     addUpdateListener(listener: () => void) {
@@ -98,6 +110,10 @@ export default class SimpleAdTracker {
         if (index !== -1) {
             this.listeners.splice(index, 1);
         }
+    }
+
+    setCompanionAdListener(listener: (ad: Ad) => void) {
+        this.companionAdListener = listener;
     }
 
     updatePods(pods: AdBreak[]) {
@@ -175,7 +191,7 @@ export default class SimpleAdTracker {
         });
     };
 
-    private iterateTrackingEvents(handler: (a: TrackingEvent, b: Ad, c: AdBreak) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
+    private iterateTrackingEvents(handler: (a: TrackingEvent) => void, time0 = this.lastPlayheadTime, time1 = this.lastPlayheadTime) {
         this.adPods.forEach((pod) => {
             const podStartTime = pod.startTime;
             if (podStartTime <= time1 && time0 <= podStartTime + pod.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
@@ -183,13 +199,27 @@ export default class SimpleAdTracker {
                     const adStartTime = ad.startTime;
                     if (adStartTime <= time1 && time0 <= adStartTime + ad.duration + AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS) {
                         ad.trackingEvents.forEach((trackingUrl) => {
-                            handler(trackingUrl, ad, pod);
+                            handler(trackingUrl);
                         });
+                        // extract this to a helper function
+                        this.iterateCompanionAds(handler, ad);
+                        this.companionAdListener(ad);
                     }
                 });
             }
         });
     }
+
+    private iterateCompanionAds(handler: (trackingUrl: TrackingEvent) => void, ad: Ad) {
+        ad.companionAds.forEach((companionAd) => {
+            companionAd.companion.forEach((companion) => {
+                companion.trackingEvents.forEach((trackingUrl) => {
+                    handler(trackingUrl);
+                });
+            });
+        });
+    }
+
 
     private async sendBeacon(trackingUrl: TrackingEvent) {
         trackingUrl.reportingState = "REPORTING";
