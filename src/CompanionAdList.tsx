@@ -175,7 +175,7 @@ export default function CompanionAdList() {
                                             Companion ID: {companion.attributes.id}
                                           </div>
                                           <div>
-                                            Slot position: x = {companion.attributes.width}; y = {companion.attributes.height}
+                                            Slot dimensions: {companion.attributes.width} x {companion.attributes.height}
                                           </div>
                                           <div>
                                             Creative dimensions: {companion.attributes.assetWidth} x {companion.attributes.assetHeight}

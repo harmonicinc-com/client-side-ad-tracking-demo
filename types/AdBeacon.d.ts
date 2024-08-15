@@ -10,6 +10,7 @@ export interface TrackingEvent {
     // beacon url list
     signalingUrls: string[]
     reportingState?: string;
+    isCompanionAd?: boolean;
 }
 
 export interface Ad {

@@ -52,18 +52,39 @@ export default function CompanionAd() {
     useInterval(updateLoop, 500);
 
     return (
-        <div style={{ position: "absolute" }}>
+        <div>
             {Object.values(companionAdsToBeRendered).map((companionAd) => (
+                // CompanionAd placement slot
                 <div key={companionAd.attributes.id} style={{
-                    zIndex: 999,
-                    position: "absolute",
-                    top: `${companionAd.attributes.height}px`,
-                    left: `${companionAd.attributes.width}px`,
-                    width: `${isFullscreen() ? companionAd.attributes.expandedWidth : companionAd.attributes.assetWidth}px`,
-                    height: `${isFullscreen() ? companionAd.attributes.expandedHeight : companionAd.attributes.assetHeight}px`
+                    width: `${companionAd.attributes.width}px`,
+                    height: `${companionAd.attributes.height}px`,
+                    backgroundColor: '#00000033',
+                    display: 'flex',
                 }}>
-                    <button onClick={() => onImgClick(companionAd)} style={{ padding: 0, border: 'none', background: 'none' }}>
-                        <img src={companionAd.staticResource} alt={companionAd.altText} style={{ maxWidth: '100%', maxHeight: '100%' }} />
+                    <div style={{
+                        position: 'absolute',
+                        height: 'inherit',
+                        width: 'inherit',
+                        alignContent: 'center',
+                        userSelect: 'none',
+                        color: '#00000044'
+                    }}>
+                        Companion ad slot
+                    </div>
+                    {/* CompanionAd */}
+                    <button onClick={() => onImgClick(companionAd)} style={{
+                        zIndex: 999,
+                        padding: 0,
+                        border: 'none',
+                        background: 'none',
+                        cursor: 'pointer',
+                        width: `${isFullscreen() ? companionAd.attributes.expandedWidth : companionAd.attributes.assetWidth}px`,
+                        height: `${isFullscreen() ? companionAd.attributes.expandedHeight : companionAd.attributes.assetHeight}px`
+                    }}>
+                        <img src={companionAd.staticResource} alt={companionAd.altText} style={{
+                            maxHeight: '100%',
+                            maxWidth: '100%',
+                        }} />
                     </button>
                 </div>
             ))}

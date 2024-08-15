@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react';
 import makeStyles from '@mui/styles/makeStyles';
-import { Collapse, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
+import { Collapse, List, ListItem, ListItemText, ListItemIcon, Grid, ListItemButton } from '@mui/material';
 import MovieIcon from '@mui/icons-material/Movie';
 import FolderIcon from '@mui/icons-material/Folder';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -121,7 +121,12 @@ function AdPodList() {
   const mergeTrackingEvents = (ad: Ad) => {
     // merge ad tracking events with companion ad tracking events
     if (ad.companionAds) {
-      const merged = [...ad.trackingEvents, ...ad.companionAds.map(c => c.companion.map(d => d.trackingEvents).flat()).flat()];
+      const merged = [...ad.trackingEvents, ...ad.companionAds.map(c => c.companion.map(d => d.trackingEvents.map(e => {
+        return {
+          ...e,
+          isCompanionAd: true
+        }
+      })).flat()).flat()];
       merged.sort((a, b) => a.startTime - b.startTime);
       return merged;
     } else {
@@ -135,7 +140,7 @@ function AdPodList() {
         <List>
           {pods.map((pod) =>
             <div key={pod.id}>
-              <ListItem button onClick={() => toggleExpandPod(pod)} className={getClass(pod)}>
+              <ListItemButton onClick={() => toggleExpandPod(pod)} className={getClass(pod)}>
                 <ListItemIcon>
                   <FolderIcon />
                 </ListItemIcon>
@@ -148,12 +153,12 @@ function AdPodList() {
                   </div>
                 </ListItemText>
                 {shouldExpandPod(pod) ? <ExpandLess /> : <ExpandMore />}
-              </ListItem>
+              </ListItemButton>
               <Collapse key={pod.id + ".ads"} in={shouldExpandPod(pod)} timeout="auto" unmountOnExit>
                 <List>
                   {pod.ads.map((ad) =>
                     <div key={ad.id}>
-                      <ListItem button onClick={() => toggleExpandAd(ad, pod)} className={getClass(ad)}>
+                      <ListItemButton onClick={() => toggleExpandAd(ad, pod)} className={getClass(ad)}>
                         <ListItemIcon>
                           <MovieIcon />
                         </ListItemIcon>
@@ -164,9 +169,10 @@ function AdPodList() {
                           <div>
                             Time: {getTime(ad)}, Duration: {(ad.duration / 1000).toFixed(1)}s
                           </div>
+                          { ad.companionAds.length > 0 ? <div>With companion ads</div> : null }
                         </ListItemText>
                         {shouldExpandAd(ad, pod) ? <ExpandLess /> : <ExpandMore />}
-                      </ListItem>
+                      </ListItemButton>
                       <Collapse key={ad.id + ".trackingUrls"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
                           {ad.trackingEvents ?
@@ -180,10 +186,12 @@ function AdPodList() {
                                 </ListItemIcon>
                                 <ListItemText disableTypography className={classes.itemText}>
                                   <div>
-                                    Event: {trackingUrl.event}
-                                  </div>
-                                  <div>
-                                    URL: {trackingUrl.signalingUrls}
+                                    <Grid container justifyContent="space-between" direction="row">
+                                      <Grid item>
+                                        Event: {trackingUrl.event}
+                                      </Grid>
+                                      { trackingUrl.isCompanionAd ? <Grid item>Companion Ad</Grid> : null }
+                                    </Grid>
                                   </div>
                                   {trackingUrl.startTime ?
                                     <div>

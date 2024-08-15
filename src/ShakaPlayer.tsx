@@ -7,7 +7,6 @@ import "@harmonicinc/shaka-player/dist/shaka-player.ui";
 import shaka from "@harmonicinc/shaka-player/dist/shaka-player.ui";
 import ShakaPlayerInterface from "../types/ShakaPlayerInterface";
 import ShakaPlayerProps from "../types/ShakaPlayerProps";
-import CompanionAd from "./CompanionAd";
 
 class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInterface {
   player: shaka.Player | null;
@@ -138,7 +137,6 @@ class ShakaPlayer extends Component<ShakaPlayerProps> implements ShakaPlayerInte
             style={{ width: "100%", height: "100%", backgroundColor: "black" }}
             autoPlay={true}>
         </video>
-        <CompanionAd />
       </div>
     );
   }
