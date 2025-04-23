@@ -8,6 +8,7 @@ import SimpleAdTracker from './SimpleAdTracker';
 import SessionContextInterface from "../types/SessionContextInterface";
 import AdBeacon, {DataRange} from "../types/AdBeacon";
 import ErrorContextInterface from "../types/ErrorContextInterface";
+import { InitResponse } from '../types/InitResponse';
 
 const AdTrackingPlaybackSessionProvider = (props: any) => {
     const AD_TRACING_METADATA_FILE_NAME = "metadata";
@@ -31,6 +32,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         localSessionId: "",
         mediaUrl: urlQueryParam,
         lowLatencyMode: lowLatencyQueryParam === "true",
+        initRequest: true,
         manifestUrl: null,
         adTrackingMetadataUrl: "",
     });
@@ -38,6 +40,32 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const [adPods, setAdPods] = useState<any>([]);
     const [lastDataRange, setLastDataRange] = useState<DataRange | null>(null);
     const [liveEdge, setLiveEdge] = useState(0);
+
+    const getInitRequestInfo = useCallback(async (url: string) => {
+        let manifestUrl, adTrackingMetadataUrl;
+
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            if (response.status !== 200) {
+                throw new Error(`POST init request got unexpected response code: ${response.status}`);
+            }
+
+            const initResponse: InitResponse = await response.json();
+            if (initResponse.manifestUrl) {
+                manifestUrl = initResponse.manifestUrl;
+            }
+            if (initResponse.trackingUrl) {
+                adTrackingMetadataUrl = initResponse.trackingUrl;
+            }
+        } catch (err) {
+            errorContext.reportError("init.request.failed", "Failed init session with POST request: " + err);
+        }
+
+        return {
+            manifestUrl,
+            adTrackingMetadataUrl
+        };
+    }, [errorContext]);
 
     const rewriteUrlToMetadataUrl = (url: string) => {
         return url.replace(/\/[^/?]+(\??[^/]*)$/, '/' + AD_TRACING_METADATA_FILE_NAME + '$1');
@@ -66,24 +94,39 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         }
     }, [errorContext]);
 
-    const loadMedia = useCallback(async (url, lowLatencyMode: boolean) => {
+    const loadMedia = useCallback(async (url, lowLatencyMode: boolean, initRequest: boolean) => {
         let manifestUrl, adTrackingMetadataUrl;
-        try {
-            const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
-            if (response.status < 200 || response.status > 299) {
-                throw new Error(`Get unexpected response code ${response.status}`);
-            }
-
-            if (response.redirected) {
-                manifestUrl = response.url;
-                adTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
+        
+        if (initRequest) {
+            const initResponse = await getInitRequestInfo(url);
+            if (initResponse.manifestUrl && initResponse.adTrackingMetadataUrl) {
+                const urlObj = new URL(url);
+                manifestUrl = `${urlObj.protocol}//${urlObj.host}${initResponse.manifestUrl}`;
+                adTrackingMetadataUrl = `${urlObj.protocol}//${urlObj.host}${initResponse.adTrackingMetadataUrl}`;
+                console.log(`Got init request info: manifestUrl=${manifestUrl}, adTrackingMetadataUrl=${adTrackingMetadataUrl}`);
             } else {
-                manifestUrl = url;
-                adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+                console.log("Failed to get init request info, falling back to GET request");
             }
-        } catch (err) {
-            errorContext.reportError("manifest.request.failed", "Failed to download manifest: " + err);
-            return;
+        }
+
+        if (!manifestUrl || !adTrackingMetadataUrl) {
+            try {
+                const response = await fetch(url, { redirect: 'follow', cache: 'reload' });
+                if (response.status < 200 || response.status > 299) {
+                    throw new Error(`Get unexpected response code ${response.status}`);
+                }
+
+                if (response.redirected) {
+                    manifestUrl = response.url;
+                    adTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
+                } else {
+                    manifestUrl = url;
+                    adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+                }
+            } catch (err) {
+                errorContext.reportError("manifest.request.failed", "Failed to download manifest: " + err);
+                return;
+            }
         }
 
         // workaround HLS issue that video stream needs to get first otherwise there is error "Manipulated manifest does not contain any segments"
@@ -103,12 +146,13 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             localSessionId: new Date().toISOString(),
             mediaUrl: url,
             lowLatencyMode,
+            initRequest,
             manifestUrl: manifestUrl,
             adTrackingMetadataUrl: adTrackingMetadataUrl
         });
 
         await refreshMetadata(adTrackingMetadataUrl);
-    }, [refreshMetadata, errorContext]);
+    }, [getInitRequestInfo, refreshMetadata, errorContext]);
 
     const unload = () => {
         setAdPods([]);
@@ -124,6 +168,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             localSessionId: "",
             mediaUrl: null,
             lowLatencyMode: sessionInfo.lowLatencyMode,
+            initRequest: sessionInfo.initRequest,
             manifestUrl: null,
             adTrackingMetadataUrl: ""
         });
@@ -131,7 +176,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
     useEffect(() => {
         if (sessionInfo.mediaUrl && !sessionInfo.localSessionId) {
-            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode);
+            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode, sessionInfo.initRequest);
         }
     }, [loadMedia, sessionInfo]);
 
@@ -155,9 +200,9 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const sessionContext: SessionContextInterface = {
         sessionInfo: sessionInfo,
         presentationStartTime: presentationStartTime,
-        load: (url, lowLatencyMode) => {
+        load: (url, lowLatencyMode, initRequest) => {
             history.replace("?url=" + encodeURIComponent(url) + (lowLatencyMode ? "&low_latency=true" : ""));
-            return loadMedia(url, lowLatencyMode);
+            return loadMedia(url, lowLatencyMode, initRequest);
         },
         unload: unload
     };
