@@ -31,10 +31,12 @@ function InfoSection() {
 
   const [lowLatencyChecked, setLowLatencyChecked] = useState(false);
 
+  const [initRequest, setInitRequest] = useState(true);
+
   const preventDefault = (event: MouseEvent<HTMLAnchorElement | HTMLSpanElement>) => event.preventDefault();
 
   const load = async () => {
-    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked);
+    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked, initRequest);
   }
 
   const unload = () => {
@@ -69,6 +71,10 @@ function InfoSection() {
         <FormControlLabel
           control={<Checkbox checked={lowLatencyChecked} onChange={(e) => setLowLatencyChecked(e.target.checked)} />}
           label="Low latency"
+        />
+        <FormControlLabel
+          control={<Checkbox checked={initRequest} onChange={(e) => setInitRequest(e.target.checked)} />}
+          label="Initialise session with POST request"
         />
       </Stack>
       <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">
