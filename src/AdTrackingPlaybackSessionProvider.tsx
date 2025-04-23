@@ -42,7 +42,8 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const [liveEdge, setLiveEdge] = useState(0);
 
     const getInitRequestInfo = useCallback(async (url: string) => {
-        let manifestUrl, adTrackingMetadataUrl;
+        let manifestUrl = "";
+        let adTrackingMetadataUrl = "";
 
         try {
             const response = await fetch(url, { method: 'POST' });
