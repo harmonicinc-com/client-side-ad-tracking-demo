@@ -64,7 +64,7 @@ const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
                     signalingUrls: t.signalingUrls,
                     reportingState: "IDLE"
                 })),
-                companionAds: ad.companionAds.map(c => ({
+                companionAds: ad.companionAds?.map(c => ({
                     ...c,
                     companion: c.companion.map(d => ({
                         ...d,
@@ -211,7 +211,7 @@ export default class SimpleAdTracker {
     }
 
     private iterateCompanionAds(handler: (trackingUrl: TrackingEvent) => void, ad: Ad) {
-        ad.companionAds.forEach((companionAd) => {
+        ad.companionAds?.forEach((companionAd) => {
             companionAd.companion.forEach((companion) => {
                 companion.trackingEvents.forEach((trackingUrl) => {
                     handler(trackingUrl);

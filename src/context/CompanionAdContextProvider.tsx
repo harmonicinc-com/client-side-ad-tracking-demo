@@ -27,7 +27,7 @@ export default function CompanionAdContextProvider (props: Readonly<{ children: 
                 // determine ad is in progress
                 for (const ad of pod.ads) {
                     if (isOnAir(ad)) {
-                        ad.companionAds.forEach((companionAd) => {
+                        ad.companionAds?.forEach((companionAd) => {
                             companionAd.companion.forEach((companion) => {
                                 const key = `${pod.id}-${ad.id}-${companion.attributes.id}-${companion.attributes.adSlotId}`;
                                 newCompanionAdsToBeRendered[key] = companion;

@@ -154,8 +154,8 @@ export default function CompanionAdList() {
                       </ListItemButton>
                       <Collapse key={ad.id + ".companionAds"} in={shouldExpandAd(ad, pod)} timeout="auto" unmountOnExit>
                         <List>
-                          {ad.companionAds.length > 0 ?
-                            ad.companionAds.map((companionAd, index) =>
+                          {(ad.companionAds?.length ?? 0) > 0 ?
+                            ad.companionAds?.map((companionAd, index) =>
                               <div key={`${ad.id}-companionAd-${index}`}>
                                 <ListItemButton>
                                   <ListItemText>

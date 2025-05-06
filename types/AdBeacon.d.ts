@@ -22,7 +22,7 @@ export interface Ad {
     // Inserted duration of the ad
     duration: number
     trackingEvents: TrackingEvent[]
-    companionAds: CompanionAds[]
+    companionAds?: CompanionAds[]
 }
 
 export interface AdBreak {
