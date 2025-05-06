@@ -169,7 +169,7 @@ function AdPodList() {
                           <div>
                             Time: {getTime(ad)}, Duration: {(ad.duration / 1000).toFixed(1)}s
                           </div>
-                          { ad.companionAds.length > 0 ? <div>With companion ads</div> : null }
+                          { (ad.companionAds && ad.companionAds.length > 0) ? <div>With companion ads</div> : null }
                         </ListItemText>
                         {shouldExpandAd(ad, pod) ? <ExpandLess /> : <ExpandMore />}
                       </ListItemButton>

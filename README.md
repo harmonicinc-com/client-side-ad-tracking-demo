@@ -17,3 +17,27 @@ In the project directory:
 4. Enter a media URL for Personalized Media Manipulation output and press the "LOAD" button.
 
 5. Observe listed ad pods, ads, and tracking events in the page.
+
+## Appendix
+
+### How the Playback URL and Beaconing URL are Obtained by the Player
+
+1. The player sends a POST request to the manifest endpoint. For e.g., a POST request is sent to:
+    ```
+    https://my-host/variant/v1/dash/manifest.mpd
+    ```
+
+2. PMM responds with the URLs. For e.g.,
+    ```
+    {
+        "manifestUrl": "/variant/v1/dash/manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed",
+        "trackingUrl": "/variant/v1/dash/metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed"
+    }
+    ```
+
+3. The player constructs the URLs by combining the host in the original URL and the relative URLs obtained. For e.g.,
+    ```
+    Manifest URL: https://my-host/variant/v1/dash/manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed
+
+    Metadata URL: https://my-host/variant/v1/dash/metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed
+    ```
