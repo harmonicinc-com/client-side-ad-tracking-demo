@@ -30,8 +30,8 @@ In the project directory:
 2. PMM responds with the URLs. For e.g.,
     ```
     {
-        "manifestUrl": "/variant/v1/dash/manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed",
-        "trackingUrl": "/variant/v1/dash/metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed"
+        "manifestUrl": "./manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed",
+        "trackingUrl": "./metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed"
     }
     ```
 

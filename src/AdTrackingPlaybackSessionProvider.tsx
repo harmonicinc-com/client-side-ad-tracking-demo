@@ -101,9 +101,8 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         if (initRequest) {
             const initResponse = await getInitRequestInfo(url);
             if (initResponse.manifestUrl && initResponse.adTrackingMetadataUrl) {
-                const urlObj = new URL(url);
-                manifestUrl = `${urlObj.protocol}//${urlObj.host}${initResponse.manifestUrl}`;
-                adTrackingMetadataUrl = `${urlObj.protocol}//${urlObj.host}${initResponse.adTrackingMetadataUrl}`;
+                manifestUrl = new URL(initResponse.manifestUrl, url).href;
+                adTrackingMetadataUrl = new URL(initResponse.adTrackingMetadataUrl, url).href;
                 console.log(`Got init request info: manifestUrl=${manifestUrl}, adTrackingMetadataUrl=${adTrackingMetadataUrl}`);
             } else {
                 console.log("Failed to get init request info, falling back to GET request");
