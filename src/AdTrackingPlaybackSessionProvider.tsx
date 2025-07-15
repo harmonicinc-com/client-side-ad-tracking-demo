@@ -69,7 +69,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
                 }
             }
         } catch (err) {
-            console.log("GET request with initSession=true failed, trying POST fallback:", err);
+            console.warn("GET request with initSession=true failed, trying POST fallback:", err);
         }
 
         // Fallback to POST request
