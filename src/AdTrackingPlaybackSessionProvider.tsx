@@ -12,6 +12,9 @@ import { InitResponse } from '../types/InitResponse';
 
 const AdTrackingPlaybackSessionProvider = (props: any) => {
     const AD_TRACING_METADATA_FILE_NAME = "metadata";
+    const PMM_PREFIX = "/pmm-";
+    const ISSTREAM_QUERY_PARAM = "isstream";
+    const DASH_LOCATION_ELEMENT_NAME = "Location";
 
     const LIVE_METADATA_TIMESPAN_MS = 120000
     const MIN_METADATA_INTERVAL_MS = 2000
@@ -113,7 +116,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
                     const resolvedUrl = new URL(line, baseUrl);
                     
                     // Check if the resolvedUrl's path has the prefix "/pmm-"
-                    const pmmMatch = resolvedUrl.pathname.match(/^\/pmm-[^/]*/);
+                    const pmmMatch = resolvedUrl.pathname.match(new RegExp(`^${PMM_PREFIX}[^/]*`));
                     let resultPath = baseUrlObj.pathname;
                     
                     if (pmmMatch) {
@@ -126,7 +129,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
                     
                     // Use query params from resolvedUrl but remove "isstream"
                     const searchParams = new URLSearchParams(resolvedUrl.search);
-                    searchParams.delete('isstream');
+                    searchParams.delete(ISSTREAM_QUERY_PARAM);
                     newUrl.search = searchParams.toString();
                     
                     return newUrl.href;
@@ -144,7 +147,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             const xmlDoc = parser.parseFromString(manifestContent, 'text/xml');
             
             // Look for Location element
-            const locationElement = xmlDoc.querySelector('Location');
+            const locationElement = xmlDoc.querySelector(DASH_LOCATION_ELEMENT_NAME);
             if (locationElement && locationElement.textContent) {
                 // Resolve the URL relative to the base URL and preserve any new paths/query params
                 const resolvedUrl = new URL(locationElement.textContent.trim(), baseUrl);
