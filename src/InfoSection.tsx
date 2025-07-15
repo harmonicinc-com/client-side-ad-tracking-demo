@@ -74,7 +74,7 @@ function InfoSection() {
         />
         <FormControlLabel
           control={<Checkbox checked={initRequest} onChange={(e) => setInitRequest(e.target.checked)} />}
-          label="Initialise session with POST request"
+          label="Use session init API"
         />
       </Stack>
       <Box className={classes.buttons} width={1} paddingTop={2} display="flex" flexDirection="row">

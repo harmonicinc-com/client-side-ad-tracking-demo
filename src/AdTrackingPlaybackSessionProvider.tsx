@@ -45,6 +45,34 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         let manifestUrl = "";
         let adTrackingMetadataUrl = "";
 
+        // First try GET request with initSession=true query parameter
+        try {
+            const getUrl = new URL(url);
+            getUrl.searchParams.set('initSession', 'true');
+            
+            const response = await fetch(getUrl.toString());
+            if (response.status === 200) {
+                const initResponse: InitResponse = await response.json();
+                if (initResponse.manifestUrl) {
+                    manifestUrl = initResponse.manifestUrl;
+                }
+                if (initResponse.trackingUrl) {
+                    adTrackingMetadataUrl = initResponse.trackingUrl;
+                }
+                
+                // If we got valid data, return it
+                if (manifestUrl || adTrackingMetadataUrl) {
+                    return {
+                        manifestUrl,
+                        adTrackingMetadataUrl
+                    };
+                }
+            }
+        } catch (err) {
+            console.log("GET request with initSession=true failed, trying POST fallback:", err);
+        }
+
+        // Fallback to POST request
         try {
             const response = await fetch(url, { method: 'POST' });
             if (response.status !== 200) {
@@ -70,6 +98,62 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
     const rewriteUrlToMetadataUrl = (url: string) => {
         return url.replace(/\/[^/?]+(\??[^/]*)$/, '/' + AD_TRACING_METADATA_FILE_NAME + '$1');
+    }
+
+    const parseHLSManifest = (manifestContent: string, baseUrl: string): string | null => {
+        const lines = manifestContent.split('\n');
+        const baseUrlObj = new URL(baseUrl);
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            // Look for media playlist URLs (not metadata or other directives)
+            if (line && !line.startsWith('#') && line.includes('.m3u8')) {
+                try {
+                    // Resolve the URL relative to the base URL
+                    const resolvedUrl = new URL(line, baseUrl);
+                    
+                    // Check if the resolvedUrl's path has the prefix "/pmm-"
+                    const pmmMatch = resolvedUrl.pathname.match(/^\/pmm-[^/]*/);
+                    let resultPath = baseUrlObj.pathname;
+                    
+                    if (pmmMatch) {
+                        // Prepend the pmm prefix to the base URL path
+                        resultPath = pmmMatch[0] + baseUrlObj.pathname;
+                    }
+                    
+                    // Create the new URL with original host and the determined path
+                    const newUrl = new URL(baseUrlObj.origin + resultPath);
+                    
+                    // Use query params from resolvedUrl but remove "isstream"
+                    const searchParams = new URLSearchParams(resolvedUrl.search);
+                    searchParams.delete('isstream');
+                    newUrl.search = searchParams.toString();
+                    
+                    return newUrl.href;
+                } catch (err) {
+                    console.warn('Failed to parse HLS media playlist URL:', line, err);
+                }
+            }
+        }
+        return null;
+    }
+
+    const parseDASHManifest = (manifestContent: string, baseUrl: string): string | null => {
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(manifestContent, 'text/xml');
+            
+            // Look for Location element
+            const locationElement = xmlDoc.querySelector('Location');
+            if (locationElement && locationElement.textContent) {
+                // Resolve the URL relative to the base URL and preserve any new paths/query params
+                const resolvedUrl = new URL(locationElement.textContent.trim(), baseUrl);
+                return resolvedUrl.href;
+            }
+        } catch (err) {
+            console.warn('Failed to parse DASH manifest:', err);
+        }
+        return null;
     }
 
     const refreshMetadata = useCallback(async (url: string) => {
@@ -120,8 +204,30 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
                     manifestUrl = response.url;
                     adTrackingMetadataUrl = rewriteUrlToMetadataUrl(response.url);
                 } else {
-                    manifestUrl = url;
-                    adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+                    // No redirect found, parse the manifest content
+                    const manifestContent = await response.text();
+                    const baseUrl = url;
+                    
+                    // Try to parse as HLS first
+                    const hlsUrl = parseHLSManifest(manifestContent, baseUrl);
+                    if (hlsUrl) {
+                        manifestUrl = hlsUrl;
+                        adTrackingMetadataUrl = rewriteUrlToMetadataUrl(hlsUrl);
+                        console.log(`Parsed HLS manifest: ${manifestUrl}`);
+                    } else {
+                        // Try to parse as DASH
+                        const dashUrl = parseDASHManifest(manifestContent, baseUrl);
+                        if (dashUrl) {
+                            manifestUrl = dashUrl;
+                            adTrackingMetadataUrl = rewriteUrlToMetadataUrl(dashUrl);
+                            console.log(`Parsed DASH manifest: ${manifestUrl}`);
+                        } else {
+                            // Fallback to original behavior
+                            manifestUrl = url;
+                            adTrackingMetadataUrl = rewriteUrlToMetadataUrl(url);
+                            console.log(`No manifest URLs found, using original URL: ${manifestUrl}`);
+                        }
+                    }
                 }
             } catch (err) {
                 errorContext.reportError("manifest.request.failed", "Failed to download manifest: " + err);

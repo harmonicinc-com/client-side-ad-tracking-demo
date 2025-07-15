@@ -22,22 +22,22 @@ In the project directory:
 
 ### How the Playback URL and Beaconing URL are Obtained by the Player
 
-1. The player sends a POST request to the manifest endpoint. For e.g., a POST request is sent to:
+1. The player sends a request to the manifest endpoint with the query param "initSession=true". For e.g., a GET request is sent to:
     ```
-    https://my-host/variant/v1/dash/manifest.mpd
+    https://my-host/variant/v1/dash/manifest.mpd?initSession=true
     ```
 
 2. PMM responds with the URLs. For e.g.,
     ```
     {
-        "manifestUrl": "./manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed",
-        "trackingUrl": "./metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed"
+        "manifestUrl": "./manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed&vosad_inst_id=pmm-0",
+        "trackingUrl": "./metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed&vosad_inst_id=pmm-0"
     }
     ```
 
 3. The player constructs the URLs by combining the host in the original URL and the relative URLs obtained. For e.g.,
     ```
-    Manifest URL: https://my-host/variant/v1/dash/manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed
+    Manifest URL: https://my-host/variant/v1/dash/manifest.mpd?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed&vosad_inst_id=pmm-0
 
-    Metadata URL: https://my-host/variant/v1/dash/metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed
+    Metadata URL: https://my-host/variant/v1/dash/metadata?sessid=a700d638-a4e8-49cd-b288-6809bd35a3ed&vosad_inst_id=pmm-0
     ```
