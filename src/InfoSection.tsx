@@ -75,7 +75,12 @@ function InfoSection() {
           label="Ad Pod Retention (minutes)" 
           type="number"
           value={podRetentionMinutes}
-          onChange={(e) => setPodRetentionMinutes(parseInt(e.target.value, 10) || 120)}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!Number.isNaN(value)) {
+              setPodRetentionMinutes(value);
+            }
+          }}
           variant={'standard'}
           inputProps={{ min: 1 }}
           helperText="Duration to keep ad pods in memory"

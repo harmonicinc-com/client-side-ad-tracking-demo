@@ -14,7 +14,7 @@ const mergePods = (existingPods: AdBreak[], pods: AdBreak[], lastPlayheadTime: n
         const timeSincePodEnded = lastPlayheadTime - podEndTime;
         
         // Keep the pod if it hasn't ended yet or if it's within the expiration window
-        const isPodActive = timeSincePodEnded < podRetentionMs;
+        const isPodActive = timeSincePodEnded <= 0 || timeSincePodEnded < podRetentionMs;
 
         if (!isPodActive) {
             existingPods.splice(i, 1);
