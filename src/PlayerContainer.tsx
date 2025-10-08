@@ -37,13 +37,11 @@ function PlayerContainer() {
         setRawCurrentTime(time);
 
         if (sessionInfo.manifestUrl?.includes(".m3u8")) {
-            const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
             const clockTime = shakaRef.current?.getPlayheadTimeAsDate()?.getTime() || 0;
             setPlayhead(clockTime);
             setPlayheadInWallClock(clockTime);
             setMetadataTimeRange(adTrackingContext.metadataTimeRange);
             adTrackingContext.updatePlayheadTime(clockTime);
-            adTrackingContext.updateLiveEdge(presentationStartTime + (shakaRef.current?.getSeekRange()?.end ?? 0) * 1000)
         } else if (sessionInfo.manifestUrl?.includes(".mpd")) {            
             const mediaTime = Math.round(time * 1000);
             const presentationStartTime = shakaRef.current?.getPresentationStartTime()?.getTime() || 0;
@@ -58,7 +56,6 @@ function PlayerContainer() {
             setMetadataTimeRange(adTrackingContext.metadataTimeRange);
             adTrackingContext.updatePlayheadTime(mediaTime);
             adTrackingContext.updatePresentationStartTime(presentationStartTime);
-            adTrackingContext.updateLiveEdge((shakaRef.current?.getSeekRange()?.end ?? 0) * 1000)
         }
     };
 
