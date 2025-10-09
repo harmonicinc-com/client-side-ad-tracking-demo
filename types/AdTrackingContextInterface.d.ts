@@ -7,7 +7,6 @@ export default interface AdTrackingContextInterface {
     metadataTimeRange: DataRange | null
     updatePresentationStartTime: (time: number) => void
     updatePlayheadTime: (time: number) => void
-    updateLiveEdge: (liveEdge: number) => void
     pause: () => void
     resume: () => void
     mute: () => void

@@ -33,10 +33,12 @@ function InfoSection() {
 
   const [initRequest, setInitRequest] = useState(true);
 
+  const [podRetentionMinutes, setPodRetentionMinutes] = useState(120);
+
   const preventDefault = (event: MouseEvent<HTMLAnchorElement | HTMLSpanElement>) => event.preventDefault();
 
   const load = async () => {
-    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked, initRequest);
+    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked, initRequest, podRetentionMinutes);
   }
 
   const unload = () => {
@@ -48,7 +50,8 @@ function InfoSection() {
   }
 
   useEffect(() => {
-    setLowLatencyChecked(sessionInfo.lowLatencyMode)
+    setLowLatencyChecked(sessionInfo.lowLatencyMode);
+    setPodRetentionMinutes(sessionInfo.podRetentionMinutes);
   }, [sessionInfo])
 
   return (
@@ -67,6 +70,22 @@ function InfoSection() {
         Harmonic Client Side Ad Tracking Demo
       </Typography>
       <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={sessionInfo.mediaUrl || ''} variant={'standard'} />
+      <Box width={1} paddingTop={2} display="flex" flexDirection="row">
+        <TextField 
+          label="Ad Pod Retention (minutes)" 
+          type="number"
+          value={podRetentionMinutes}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!Number.isNaN(value)) {
+              setPodRetentionMinutes(value);
+            }
+          }}
+          variant={'standard'}
+          inputProps={{ min: 1 }}
+          helperText="Duration to keep ad pods in memory"
+        />
+      </Box>
       <Stack direction="row">
         <FormControlLabel
           control={<Checkbox checked={lowLatencyChecked} onChange={(e) => setLowLatencyChecked(e.target.checked)} />}

@@ -6,12 +6,17 @@ const MAX_TOLERANCE_IN_SPEED = 2;
 // Used for events that have zero duration & PRFT source switching
 const MAX_TOLERANCE_EVENT_END_TIME_MS = 1000;
 
-const mergePods = (existingPods: AdBreak[], pods: AdBreak[]) => {
+const mergePods = (existingPods: AdBreak[], pods: AdBreak[], lastPlayheadTime: number, podRetentionMs: number) => {
     let updated = false;
 
     for (let i = existingPods.length - 1; i >= 0; i--) {
-        const podId = existingPods[i].id;
-        if (!pods.find(p => p.id === podId)) {
+        const podEndTime = existingPods[i].startTime + existingPods[i].duration;
+        const timeSincePodEnded = lastPlayheadTime - podEndTime;
+        
+        // Keep the pod if it hasn't ended yet or if it's within the expiration window
+        const isPodActive = timeSincePodEnded <= 0 || timeSincePodEnded < podRetentionMs;
+
+        if (!isPodActive) {
             existingPods.splice(i, 1);
             updated = true;
         }
@@ -41,13 +46,6 @@ const mergePods = (existingPods: AdBreak[], pods: AdBreak[]) => {
 const mergeAds = (existingAds: Ad[], ads: Ad[]) => {
     let updated = false;
 
-    for (let i = existingAds.length - 1; i >= 0; i--) {
-        const adId = existingAds[i].id;
-        if (!ads.find(a => a.id === adId)) {
-            existingAds.splice(i, 1);
-            updated = true;
-        }
-    }
     ads.forEach((ad) => {
         let existingAd = existingAds.find(a => a.id === ad.id);
         if (!existingAd) {
@@ -92,6 +90,7 @@ export default class SimpleAdTracker {
     private lastPlayheadUpdateTime: number;
     private listeners: (() => void)[];
     private companionAdListener: ((ad: Ad) => void);
+    private podRetentionMinutes: number;
 
     constructor() {
         this.adPods = [];
@@ -99,6 +98,7 @@ export default class SimpleAdTracker {
         this.lastPlayheadUpdateTime = 0;
         this.listeners = [];
         this.companionAdListener = () => {};
+        this.podRetentionMinutes = 120; // Default: 2 hours
     }
 
     addUpdateListener(listener: () => void) {
@@ -116,8 +116,13 @@ export default class SimpleAdTracker {
         this.companionAdListener = listener;
     }
 
+    setPodRetentionMinutes(minutes: number) {
+        this.podRetentionMinutes = minutes;
+    }
+
     updatePods(pods: AdBreak[]) {
-        const updated = mergePods(this.adPods, pods);
+        const podRetentionMs = this.podRetentionMinutes * 60 * 1000;
+        const updated = mergePods(this.adPods, pods, this.lastPlayheadTime, podRetentionMs);
         if (updated) {
             this.notifyListeners();
         }

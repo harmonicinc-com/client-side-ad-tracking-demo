@@ -16,9 +16,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const ISSTREAM_QUERY_PARAM = "isstream";
     const DASH_LOCATION_ELEMENT_NAME = "Location";
 
-    const LIVE_METADATA_TIMESPAN_MS = 120000
     const MIN_METADATA_INTERVAL_MS = 2000
-    const MIN_METADATA_LOOK_AHEAD_MS = 5000 // to avoid missing ads, it should be larger than MIN_METADATA_INTERVAL_MS
 
     const history = useHistory();
     const location = useLocation();
@@ -38,11 +36,11 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         initRequest: true,
         manifestUrl: null,
         adTrackingMetadataUrl: "",
+        podRetentionMinutes: 120,
     });
     const [lastPlayheadTime, setLastPlayheadTime] = useState(0);
     const [adPods, setAdPods] = useState<any>([]);
     const [lastDataRange, setLastDataRange] = useState<DataRange | null>(null);
-    const [liveEdge, setLiveEdge] = useState(0);
 
     const getInitRequestInfo = useCallback(async (url: string) => {
         let manifestUrl = "";
@@ -182,7 +180,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         }
     }, [errorContext]);
 
-    const loadMedia = useCallback(async (url, lowLatencyMode: boolean, initRequest: boolean) => {
+    const loadMedia = useCallback(async (url, lowLatencyMode: boolean, initRequest: boolean, podRetentionMinutes: number) => {
         let manifestUrl, adTrackingMetadataUrl;
         
         if (initRequest) {
@@ -246,6 +244,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         setAdPods([]);
         setLastDataRange(null)
         adTrackerRef.current = new SimpleAdTracker();
+        adTrackerRef.current.setPodRetentionMinutes(podRetentionMinutes);
         const pods = adTrackerRef.current.getAdPods();
         adTrackerRef.current.addUpdateListener(() => {
             setAdPods([...pods]);  // trigger re-render
@@ -257,7 +256,8 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             lowLatencyMode,
             initRequest,
             manifestUrl: manifestUrl,
-            adTrackingMetadataUrl: adTrackingMetadataUrl
+            adTrackingMetadataUrl: adTrackingMetadataUrl,
+            podRetentionMinutes,
         });
 
         await refreshMetadata(adTrackingMetadataUrl);
@@ -279,13 +279,14 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             lowLatencyMode: sessionInfo.lowLatencyMode,
             initRequest: sessionInfo.initRequest,
             manifestUrl: null,
-            adTrackingMetadataUrl: ""
+            adTrackingMetadataUrl: "",
+            podRetentionMinutes: sessionInfo.podRetentionMinutes
         });
     }
 
     useEffect(() => {
         if (sessionInfo.mediaUrl && !sessionInfo.localSessionId) {
-            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode, sessionInfo.initRequest);
+            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode, sessionInfo.initRequest, sessionInfo.podRetentionMinutes);
         }
     }, [loadMedia, sessionInfo]);
 
@@ -294,24 +295,16 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             return  // skip until initial range is fetched
         }
 
-        let useLiveMetadata = lastPlayheadTime > liveEdge - LIVE_METADATA_TIMESPAN_MS
-        if (useLiveMetadata) {
-            if (!lastDataRange.end || lastPlayheadTime + MIN_METADATA_LOOK_AHEAD_MS > lastDataRange.end) {
-                refreshMetadata(sessionInfo.adTrackingMetadataUrl);
-            }
-        } else if (!lastDataRange.end || lastPlayheadTime < lastDataRange.start || lastPlayheadTime > lastDataRange.end) {            
-            const url = new URL(sessionInfo.adTrackingMetadataUrl);
-            url.searchParams.append('start', lastPlayheadTime.toFixed(0));
-            refreshMetadata(url.toString());
-        }
+        // Always refresh metadata as duration of existing pods may change
+        await refreshMetadata(sessionInfo.adTrackingMetadataUrl);
     }, MIN_METADATA_INTERVAL_MS);
 
     const sessionContext: SessionContextInterface = {
         sessionInfo: sessionInfo,
         presentationStartTime: presentationStartTime,
-        load: (url, lowLatencyMode, initRequest) => {
+        load: (url, lowLatencyMode, initRequest, podRetentionMinutes) => {
             history.replace("?url=" + encodeURIComponent(url) + (lowLatencyMode ? "&low_latency=true" : ""));
-            return loadMedia(url, lowLatencyMode, initRequest);
+            return loadMedia(url, lowLatencyMode, initRequest, podRetentionMinutes);
         },
         unload: unload
     };
@@ -327,9 +320,6 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         updatePlayheadTime: (time: number) => {
             setLastPlayheadTime(time);
             adTrackerRef.current?.updatePlayheadTime(time);
-        },
-        updateLiveEdge: (liveEdge: number) => {
-            setLiveEdge(liveEdge);
         },
         pause: () => adTrackerRef.current?.pause(),
         resume: () => adTrackerRef.current?.resume(),
