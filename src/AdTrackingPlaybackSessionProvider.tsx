@@ -302,9 +302,9 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const sessionContext: SessionContextInterface = {
         sessionInfo: sessionInfo,
         presentationStartTime: presentationStartTime,
-        load: (url, lowLatencyMode, initRequest, adExpirationMinutes) => {
+        load: (url, lowLatencyMode, initRequest, podRetentionMinutes) => {
             history.replace("?url=" + encodeURIComponent(url) + (lowLatencyMode ? "&low_latency=true" : ""));
-            return loadMedia(url, lowLatencyMode, initRequest, adExpirationMinutes);
+            return loadMedia(url, lowLatencyMode, initRequest, podRetentionMinutes);
         },
         unload: unload
     };
