@@ -35,10 +35,12 @@ function InfoSection() {
 
   const [podRetentionMinutes, setPodRetentionMinutes] = useState(120);
 
+  const [metadataRefreshIntervalMs, setMetadataRefreshIntervalMs] = useState(2000);
+
   const preventDefault = (event: MouseEvent<HTMLAnchorElement | HTMLSpanElement>) => event.preventDefault();
 
   const load = async () => {
-    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked, initRequest, podRetentionMinutes);
+    await sessionContext.load(urlInputRef.current.value, lowLatencyChecked, initRequest, podRetentionMinutes, metadataRefreshIntervalMs);
   }
 
   const unload = () => {
@@ -52,6 +54,7 @@ function InfoSection() {
   useEffect(() => {
     setLowLatencyChecked(sessionInfo.lowLatencyMode);
     setPodRetentionMinutes(sessionInfo.podRetentionMinutes);
+    setMetadataRefreshIntervalMs(sessionInfo.metadataRefreshIntervalMs);
   }, [sessionInfo])
 
   return (
@@ -70,7 +73,7 @@ function InfoSection() {
         Harmonic Client Side Ad Tracking Demo
       </Typography>
       <TextField inputRef={urlInputRef} label="Media URL" fullWidth={true} defaultValue={sessionInfo.mediaUrl || ''} variant={'standard'} />
-      <Box width={1} paddingTop={2} display="flex" flexDirection="row">
+      <Box width={1} paddingTop={2} display="flex" flexDirection="row" gap={2}>
         <TextField 
           label="Ad Pod Retention (minutes)" 
           type="number"
@@ -84,6 +87,20 @@ function InfoSection() {
           variant={'standard'}
           inputProps={{ min: 1 }}
           helperText="Duration to keep ad pods in memory"
+        />
+        <TextField 
+          label="Metadata Refresh Interval (ms)" 
+          type="number"
+          value={metadataRefreshIntervalMs}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (!Number.isNaN(value)) {
+              setMetadataRefreshIntervalMs(value);
+            }
+          }}
+          variant={'standard'}
+          inputProps={{ min: 500 }}
+          helperText="How often to refresh metadata"
         />
       </Box>
       <Stack direction="row">

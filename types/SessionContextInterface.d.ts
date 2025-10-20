@@ -6,9 +6,10 @@ export default interface SessionContextInterface {
         initRequest: boolean,
         manifestUrl: string | null,
         adTrackingMetadataUrl: string | null,
-        podRetentionMinutes: number
+        podRetentionMinutes: number,
+        metadataRefreshIntervalMs: number
     },
     presentationStartTime: number | null,
-    load: (url: any, lowLatency: boolean, initRequest: boolean, podRetentionMinutes: number) => Promise<void>,
+    load: (url: any, lowLatency: boolean, initRequest: boolean, podRetentionMinutes: number, metadataRefreshIntervalMs: number) => Promise<void>,
     unload: () => void
 }
