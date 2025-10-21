@@ -16,8 +16,6 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const ISSTREAM_QUERY_PARAM = "isstream";
     const DASH_LOCATION_ELEMENT_NAME = "Location";
 
-    const MIN_METADATA_INTERVAL_MS = 2000
-
     const history = useHistory();
     const location = useLocation();
     const searchParams = new URLSearchParams(location.search);
@@ -37,6 +35,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         manifestUrl: null,
         adTrackingMetadataUrl: "",
         podRetentionMinutes: 120,
+        metadataRefreshIntervalMs: 2000,
     });
     const [lastPlayheadTime, setLastPlayheadTime] = useState(0);
     const [adPods, setAdPods] = useState<any>([]);
@@ -180,7 +179,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         }
     }, [errorContext]);
 
-    const loadMedia = useCallback(async (url, lowLatencyMode: boolean, initRequest: boolean, podRetentionMinutes: number) => {
+    const loadMedia = useCallback(async (url, lowLatencyMode: boolean, initRequest: boolean, podRetentionMinutes: number, metadataRefreshIntervalMs: number) => {
         let manifestUrl, adTrackingMetadataUrl;
         
         if (initRequest) {
@@ -258,6 +257,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             manifestUrl: manifestUrl,
             adTrackingMetadataUrl: adTrackingMetadataUrl,
             podRetentionMinutes,
+            metadataRefreshIntervalMs,
         });
 
         await refreshMetadata(adTrackingMetadataUrl);
@@ -270,6 +270,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         adTrackerRef.current.addUpdateListener(() => {
             setAdPods([...pods]);  // trigger re-render
         });
+        adTrackerRef.current.unload();
 
         setPresentationStartTime(0);
 
@@ -280,13 +281,14 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             initRequest: sessionInfo.initRequest,
             manifestUrl: null,
             adTrackingMetadataUrl: "",
-            podRetentionMinutes: sessionInfo.podRetentionMinutes
+            podRetentionMinutes: sessionInfo.podRetentionMinutes,
+            metadataRefreshIntervalMs: sessionInfo.metadataRefreshIntervalMs
         });
     }
 
     useEffect(() => {
         if (sessionInfo.mediaUrl && !sessionInfo.localSessionId) {
-            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode, sessionInfo.initRequest, sessionInfo.podRetentionMinutes);
+            loadMedia(sessionInfo.mediaUrl, sessionInfo.lowLatencyMode, sessionInfo.initRequest, sessionInfo.podRetentionMinutes, sessionInfo.metadataRefreshIntervalMs);
         }
     }, [loadMedia, sessionInfo]);
 
@@ -297,14 +299,14 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
         // Always refresh metadata as duration of existing pods may change
         await refreshMetadata(sessionInfo.adTrackingMetadataUrl);
-    }, MIN_METADATA_INTERVAL_MS);
+    }, sessionInfo.metadataRefreshIntervalMs);
 
     const sessionContext: SessionContextInterface = {
         sessionInfo: sessionInfo,
         presentationStartTime: presentationStartTime,
-        load: (url, lowLatencyMode, initRequest, podRetentionMinutes) => {
+        load: (url, lowLatencyMode, initRequest, podRetentionMinutes, metadataRefreshIntervalMs) => {
             history.replace("?url=" + encodeURIComponent(url) + (lowLatencyMode ? "&low_latency=true" : ""));
-            return loadMedia(url, lowLatencyMode, initRequest, podRetentionMinutes);
+            return loadMedia(url, lowLatencyMode, initRequest, podRetentionMinutes, metadataRefreshIntervalMs);
         },
         unload: unload
     };

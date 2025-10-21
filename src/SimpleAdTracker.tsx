@@ -1,4 +1,5 @@
 import {Ad, AdBreak, TrackingEvent} from "../types/AdBeacon";
+import PlayedRangeTracker from "./PlayedRangeTracker";
 
 const AD_END_TRACKING_EVENT_TIME_TOLERANCE_MS = 500;
 const MAX_TOLERANCE_IN_SPEED = 2;
@@ -91,6 +92,7 @@ export default class SimpleAdTracker {
     private listeners: (() => void)[];
     private companionAdListener: ((ad: Ad) => void);
     private podRetentionMinutes: number;
+    private playedRangeTracker: PlayedRangeTracker;
 
     constructor() {
         this.adPods = [];
@@ -99,6 +101,11 @@ export default class SimpleAdTracker {
         this.listeners = [];
         this.companionAdListener = () => {};
         this.podRetentionMinutes = 120; // Default: 2 hours
+        this.playedRangeTracker = new PlayedRangeTracker();
+    }
+
+    unload() {
+        this.playedRangeTracker.clearRanges();
     }
 
     addUpdateListener(listener: () => void) {
@@ -123,6 +130,9 @@ export default class SimpleAdTracker {
     updatePods(pods: AdBreak[]) {
         const podRetentionMs = this.podRetentionMinutes * 60 * 1000;
         const updated = mergePods(this.adPods, pods, this.lastPlayheadTime, podRetentionMs);
+        
+        this.checkAndSendLateBeacon(podRetentionMs);
+        
         if (updated) {
             this.notifyListeners();
         }
@@ -148,6 +158,10 @@ export default class SimpleAdTracker {
                 }, this.lastPlayheadTime, time);
             }
         }
+        
+        // Track the position in played ranges
+        this.playedRangeTracker.trackPosition(time);
+        
         this.lastPlayheadTime = time;
         this.lastPlayheadUpdateTime = now;
     }
@@ -244,4 +258,41 @@ export default class SimpleAdTracker {
         }
         this.notifyListeners();
     };
+
+    private async checkAndSendLateBeacon(retentionMs: number) {
+        console.log(`Checking played ranges: ${this.playedRangeTracker.getRanges().map(r => `[${r.start}, ${r.end}]`).join(", ")}`);
+
+        // Check played ranges for all tracking events and send beacons if needed
+        this.adPods.forEach((pod) => {
+            pod.ads.forEach((ad) => {
+                ad.trackingEvents.forEach((trackingEvent) => {
+                    if (
+                        trackingEvent.reportingState === "IDLE" &&
+                        this.playedRangeTracker.wasTimePlayed(trackingEvent.startTime)
+                    ) {
+                        console.log(`Sending late beacon for event ${trackingEvent.event} at ${trackingEvent.startTime}`);
+                        this.sendBeacon(trackingEvent);
+                    }
+                });
+                
+                // Also check companion ads
+                ad.companionAds?.forEach((companionAd) => {
+                    companionAd.companion.forEach((companion) => {
+                        companion.trackingEvents.forEach((trackingEvent) => {
+                            if (
+                                trackingEvent.reportingState === "IDLE" &&
+                                this.playedRangeTracker.wasTimePlayed(trackingEvent.startTime)
+                            ) {
+                                console.log(`Sending late beacon for companion ad event ${trackingEvent.event} at ${trackingEvent.startTime}`);
+                                this.sendBeacon(trackingEvent);
+                            }
+                        });
+                    });
+                });
+            });
+        });
+
+        // Clear old played ranges beyond retention time
+        this.playedRangeTracker.cleanupOldRanges(this.lastPlayheadTime, retentionMs);
+    }
 }
