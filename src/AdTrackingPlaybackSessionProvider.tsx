@@ -44,6 +44,7 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
     const getInitRequestInfo = useCallback(async (url: string) => {
         let manifestUrl = "";
         let adTrackingMetadataUrl = "";
+        let redirectedUrl = url;
 
         // First try GET request with initSession=true query parameter
         try {
@@ -52,6 +53,11 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             
             const response = await fetch(getUrl.toString());
             if (response.status === 200) {
+                // Capture the redirected URL if redirect occurred
+                if (response.redirected) {
+                    redirectedUrl = response.url;
+                }
+                
                 const initResponse: InitResponse = await response.json();
                 if (initResponse.manifestUrl) {
                     manifestUrl = initResponse.manifestUrl;
@@ -64,7 +70,8 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
                 if (manifestUrl || adTrackingMetadataUrl) {
                     return {
                         manifestUrl,
-                        adTrackingMetadataUrl
+                        adTrackingMetadataUrl,
+                        redirectedUrl
                     };
                 }
             }
@@ -77,6 +84,11 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
             const response = await fetch(url, { method: 'POST' });
             if (response.status !== 200) {
                 throw new Error(`POST init request got unexpected response code: ${response.status}`);
+            }
+
+            // Capture the redirected URL if redirect occurred
+            if (response.redirected) {
+                redirectedUrl = response.url;
             }
 
             const initResponse: InitResponse = await response.json();
@@ -92,7 +104,8 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
 
         return {
             manifestUrl,
-            adTrackingMetadataUrl
+            adTrackingMetadataUrl,
+            redirectedUrl
         };
     }, [errorContext]);
 
@@ -185,11 +198,13 @@ const AdTrackingPlaybackSessionProvider = (props: any) => {
         if (initRequest) {
             const initResponse = await getInitRequestInfo(url);
             if (initResponse.manifestUrl && initResponse.adTrackingMetadataUrl) {
-                manifestUrl = new URL(initResponse.manifestUrl, url).href;
-                adTrackingMetadataUrl = new URL(initResponse.adTrackingMetadataUrl, url).href;
+                // Use the redirected URL as the base if it was redirected
+                const baseUrl = initResponse.redirectedUrl || url;
+                manifestUrl = new URL(initResponse.manifestUrl, baseUrl).href;
+                adTrackingMetadataUrl = new URL(initResponse.adTrackingMetadataUrl, baseUrl).href;
                 console.log(`Got init request info: manifestUrl=${manifestUrl}, adTrackingMetadataUrl=${adTrackingMetadataUrl}`);
             } else {
-                console.log("Failed to get init request info, falling back to GET request");
+                console.log("Failed to get init request info, falling back to redirect/parsing manifest");
             }
         }
 
