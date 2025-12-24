@@ -8,10 +8,12 @@ const MAX_TOLERANCE_IN_SPEED = 2;
 const MAX_TOLERANCE_EVENT_END_TIME_MS = 1000;
 
 // Player initiated events should only fire on user action, not on playhead time
-const PLAYER_INITIATED_EVENTS = ["pause", "resume", "mute", "unmute", "clicktracking", "clickabstracttype"];
+// Note: "clickTracking" and "clickAbstractType" are treated as player-initiated here so they are only fired in response
+// to explicit user interaction. To be handled separately later.
+const PLAYER_INITIATED_EVENTS = new Set<string>(["pause", "resume", "mute", "unmute", "clickTracking", "clickAbstractType"]);
 
 const isPlayerInitiatedEvent = (event: string): boolean => {
-    return PLAYER_INITIATED_EVENTS.includes(event);
+    return PLAYER_INITIATED_EVENTS.has(event);
 };
 
 const mergePods = (existingPods: AdBreak[], pods: AdBreak[], lastPlayheadTime: number, podRetentionMs: number) => {
