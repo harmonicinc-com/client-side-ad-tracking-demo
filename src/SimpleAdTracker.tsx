@@ -7,6 +7,15 @@ const MAX_TOLERANCE_IN_SPEED = 2;
 // Used for events that have zero duration & PRFT source switching
 const MAX_TOLERANCE_EVENT_END_TIME_MS = 1000;
 
+// Player initiated events should only fire on user action, not on playhead time
+// Note: "clickTracking" and "clickAbstractType" are treated as player-initiated here so they are only fired in response
+// to explicit user interaction. To be handled separately later.
+const PLAYER_INITIATED_EVENTS = new Set<string>(["pause", "resume", "mute", "unmute", "clickTracking", "clickAbstractType"]);
+
+const isPlayerInitiatedEvent = (event: string): boolean => {
+    return PLAYER_INITIATED_EVENTS.has(event);
+};
+
 const mergePods = (existingPods: AdBreak[], pods: AdBreak[], lastPlayheadTime: number, podRetentionMs: number) => {
     let updated = false;
 
@@ -148,6 +157,10 @@ export default class SimpleAdTracker {
             const speed = (time - this.lastPlayheadTime) / (now - this.lastPlayheadUpdateTime);
             if (speed > 0 && speed <= MAX_TOLERANCE_IN_SPEED) {
                 this.iterateTrackingEvents((trackingUrl) => {
+                    // Filter out player initiated events - they should only fire on user action
+                    if (isPlayerInitiatedEvent(trackingUrl.event)) {
+                        return;
+                    }
                     const startTime = trackingUrl.startTime;
                     const endTime = startTime + (trackingUrl.duration || MAX_TOLERANCE_EVENT_END_TIME_MS);
                     if (trackingUrl.reportingState === "IDLE" &&
@@ -268,6 +281,7 @@ export default class SimpleAdTracker {
                 ad.trackingEvents.forEach((trackingEvent) => {
                     if (
                         trackingEvent.reportingState === "IDLE" &&
+                        !isPlayerInitiatedEvent(trackingEvent.event) &&
                         this.playedRangeTracker.wasTimePlayed(trackingEvent.startTime)
                     ) {
                         console.log(`Sending late beacon for event ${trackingEvent.event} at ${trackingEvent.startTime}`);
@@ -281,6 +295,7 @@ export default class SimpleAdTracker {
                         companion.trackingEvents.forEach((trackingEvent) => {
                             if (
                                 trackingEvent.reportingState === "IDLE" &&
+                                !isPlayerInitiatedEvent(trackingEvent.event) &&
                                 this.playedRangeTracker.wasTimePlayed(trackingEvent.startTime)
                             ) {
                                 console.log(`Sending late beacon for companion ad event ${trackingEvent.event} at ${trackingEvent.startTime}`);

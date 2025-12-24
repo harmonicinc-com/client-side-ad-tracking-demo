@@ -2,7 +2,7 @@ import { CompanionAds } from "./CompanionAds";
 
 export interface TrackingEvent {
     // event type
-    event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete" | "createView"
+    event: "pause" | "resume" | "mute" | "unmute" | "start" | "impression" | "firstQuartile" | "midpoint" | "thirdQuartile" | "complete" | "createView" | "clickTracking" | "clickAbstractType";
     // time to fire beacon,
     startTime: number
     duration: number
